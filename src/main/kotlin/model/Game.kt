@@ -29,6 +29,19 @@ data class Game(
         }
     }
 
+    fun winner():Player{
+        val score=score()
+        return if(score.first>score.second) Player.BLACK
+        else Player.WHITE
+    }
+
+    fun showCurrentPlayer():Player{
+        return this.board.player
+    }
+    fun stateOfGame():Boolean{
+        return isOver
+    }
+
     fun move(move: String): Game {
         require(!isOver){"Game over"}
         val (board, c) = board.play(move)
