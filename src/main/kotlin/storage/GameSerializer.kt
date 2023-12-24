@@ -6,7 +6,6 @@ import kotlinx.serialization.json.Json
 import model.Game
 
 object GameSerializer: Serializer<Game> {
-
     @OptIn(ExperimentalSerializationApi::class)
     private val json = Json {
         prettyPrint = true
@@ -16,5 +15,5 @@ object GameSerializer: Serializer<Game> {
 
     override fun serialize(data: Game): String = json.encodeToString(data)
 
-    override fun deserialize(text: String): Game = json.decodeFromString<Game>(text)
+    override fun deserialize(text: String): Game = Json.decodeFromString<Game>(text)
 }
