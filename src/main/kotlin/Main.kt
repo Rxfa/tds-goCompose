@@ -147,6 +147,7 @@ fun main() = application {
 
         }
     }
+    println("oi")
 }
 
 /*
