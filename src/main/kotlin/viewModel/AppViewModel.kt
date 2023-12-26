@@ -5,7 +5,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import kotlinx.coroutines.*
-import model.Game
+import model.*
 import mongo.MongoDriver
 import storage.GameSerializer
 import storage.MongoStorage
@@ -13,7 +13,7 @@ import storage.MongoStorage
 class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
 
     private val storage = MongoStorage<String, Game>("games", driver, GameSerializer)
-    private var clash by mutableStateOf( Clash(storage))
+    private var match by mutableStateOf( Match(storage))
 
     //    var game by mutableStateOf(Game())
     var viewScore by mutableStateOf(false)
@@ -23,30 +23,30 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
     var errorMessage by mutableStateOf<String?>(null) //ErrorDialog state
         private set
 
-    val board: Board? get() = (clash as? ClashRun)?.game?.board
-    val score: Score get() = (clash as ClashRun).game.score
+    val board: Board? get() = (match as? RunningMatch)?.game?.board
 
-    val me: Player? get() = (clash as? ClashRun)?.me
+    val score: Nothing = TODO()
 
-    val hasClash: Boolean get() = clash is ClashRun
-    val newAvailable: Boolean get() = clash.canNewBoard()
+    val me: Player? get() = (match as? RunningMatch)?.me
+
+    val isRunning: Boolean get() = match is RunningMatch
 
     private var waitingJob by mutableStateOf<Job?>(null)
+
     val isWaiting: Boolean get() = waitingJob != null
+
     private val turnAvailable: Boolean
-        get() = (board as? BoardRun)?.turn == me || newAvailable
+        get() = (match as RunningMatch).isMyTurn()
 
-
-    fun newBoard(){ clash = clash.newBoard() }
 
     fun showScore(){ viewScore = true}
     fun hideScore(){ viewScore = false}
 
     fun hideError() { errorMessage = null }
 
-    fun play(pos: Position){
+    suspend fun play(pos: String){
         try {
-            clash = clash.play(pos)
+            match = (match as RunningMatch).play(pos)
         } catch (e: Exception) {
             errorMessage = e.message
         }
@@ -57,17 +57,17 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
     { NEW("Start"), JOIN("Join") }
 
     fun cancelInput() { inputName = null }
-    fun newGame(gameName: String) {
+    suspend fun newGame(gameName: String) {
         cancelWaiting()
 
-        clash = clash.startClash(gameName)
+        match = match.create(gameName)
         inputName = null
     }
 
-    fun joinGame(gameName: String) {
+    suspend fun joinGame(gameName: String) {
         cancelWaiting()
 
-        clash = clash.joinClash(gameName)
+        match = match.join(gameName)
         inputName = null
 
         waitForOtherSide()
@@ -75,7 +75,7 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
 
     suspend fun refreshGame() {
         try {
-            clash = clash.refreshClash()
+            match = (match as RunningMatch).refresh()
         } catch (e: Exception) {
             errorMessage = e.message
         }
@@ -84,8 +84,8 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
     fun showNewGameDialog() { inputName = InputName.NEW }
     fun showJoinGameDialog() { inputName = InputName.JOIN }
 
-    fun exit() {
-        clash.deleteIfIsOwner()
+    suspend fun exit() {
+        (match as RunningMatch).delete()
         cancelWaiting()
     }
 
@@ -99,11 +99,11 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
         waitingJob = scope.launch(Dispatchers.IO) {
             do {
                 delay(3000)
-                try { clash = clash.refreshClash() }
+                try { match = (match as RunningMatch).refresh() }
                 catch (e: NoChangesException) { /* Ignore */ }
                 catch (e: Exception) {
                     errorMessage = e.message
-                    if (e is GameDeletedException) clash = Clash(storage)
+                    if (e is GameDeletedException) match =Match(storage)
                 }
             } while (!turnAvailable)
             waitingJob = null

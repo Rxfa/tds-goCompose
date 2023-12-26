@@ -6,6 +6,7 @@ import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
@@ -35,21 +36,23 @@ fun FrameWindowScope.App(driver: MongoDriver, exitFunction: () -> Unit) {
 
     MenuBar {
         Menu("Game") {
-            Item("Start Game", onClick = vm::showNewGameDialog)
+            //Item("Start Game", onClick = vm::showNewGameDialog)
             Item("Join Game", onClick = vm::showJoinGameDialog)
-            Item("Exit", onClick = {vm::exit;exitFunction()})
+            Item("Exit", onClick = {vm::exit; exitFunction()})
         }
         Menu("Play"){
-            Item("Pass", onClick = vm::passRoundGame)
-            Item("Show Captures", onClick = vm::showCaptures)
+            //Item("Pass", onClick = vm::passRoundGame)
+            //Item("Show Captures", onClick = vm::showCaptures)
             Item("Show Final Score", onClick = vm::showScore)
         }
         Menu("Options"){
-            Item("Show Last Played", onClick = vm::showLastPlayed)
+            //Item("Show Last Played", onClick = vm::showLastPlayed)
         }
     }
     MaterialTheme{
-        Column(horizontalAlignment)
+        Column(horizontalAlignment = Alignment.CenterHorizontally){
+
+        }
     }
 
 

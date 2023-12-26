@@ -50,6 +50,8 @@ class RunningMatch(
         val newGame = game //TODO
         return RunningMatch(gs, id, me, newGame)
     }
+
+    fun isMyTurn() = game.isMyTurn(me)
 }
 
 suspend fun GameStorage.slowRead(key: String): Game? {
