@@ -55,16 +55,73 @@ fun FrameWindowScope.App(driver: MongoDriver, exitFunction: () -> Unit) {
         }
     }
     MaterialTheme{
-        //Column(horizontalAlignment = Alignment.CenterHorizontally){
-
-            Image(
-                painter=painterResource("board.png"),
-                contentDescription = "board",
-                modifier=Modifier.size(BOARD_SIDE)
+        background()
+       // Column(horizontalAlignment = Alignment.CenterHorizontally){
+        if (vm.viewScore) ScoreDialog(vm.score,vm::hideScore)
+        vm.inputName?.let{
+            StartOrJoinDialog(
+                scope = scope,
+                type = it,
+                onCancel = vm::cancelInput,
+                onAction = if(it == AppViewModel.InputName.NEW) vm::newGame else vm::joinGame
             )
+       }
 
     }
+}
 
+@Composable
+fun ScoreDialog(score: Pair<Double, Double>?, closeDialog:()-> Unit){
+    AlertDialog(
+        title={Text(text="Scores in a", style= MaterialTheme.typography.h4)},
+        onDismissRequest = closeDialog,
+        confirmButton = {TextButton(onClick = closeDialog){Text("Close")} },
+        text= {Row(
+            modifier= Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+            ){
+            Column(horizontalAlignment = Alignment.CenterHorizontally){
+                Player.entries.forEach{player ->
+                    Row(verticalAlignment = Alignment.CenterVertically){
+                        cell(player.state,size = 30.dp)
+                        Text(
+                            text= " - ${score?.second}",
+                            style = MaterialTheme.typography.h4
+                        )
+                    }
+                }
+                Text(
+                    text = "Draws - ${score?.second}",
+                    style = MaterialTheme.typography.h4
+                )
+            }
+        }}
+    )
+}
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
+fun StartOrJoinDialog(scope:CoroutineScope, type: AppViewModel.InputName, onCancel: () -> Unit, onAction: KSuspendFunction1<String, Unit>){
+        rememberCoroutineScope()
+        var name by remember { mutableStateOf(" ") }
+
+        AlertDialog(
+            onDismissRequest = onCancel,
+            title= {Text(text = "Name to ${type.txt}",
+                style = MaterialTheme.typography.h5)},
+
+            text={ OutlinedTextField(
+                value= name,
+                onValueChange = {name=it},
+                label= {Text("Name of game")}
+            )},
+            confirmButton = {
+                TextButton(enabled =true,
+                    onClick={scope.launch{onAction(name)}}){Text(type.txt)}
+            },
+            dismissButton = {
+                TextButton(onClick = onCancel){Text("Cancel")}
+            })
+        }
 
 
 
@@ -82,8 +139,17 @@ fun FrameWindowScope.App(driver: MongoDriver, exitFunction: () -> Unit) {
 
 
 
-}
 
+
+
+@Composable
+fun background(){
+    Image(
+        painter=painterResource("board.png"),
+        contentDescription = "board",
+        modifier=Modifier.size(BOARD_SIDE)
+    )
+}
 
 @Composable
 fun BoardView(board: Board, onClick: (Cell)->Unit) =
