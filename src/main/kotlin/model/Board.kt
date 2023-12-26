@@ -16,7 +16,7 @@ data class Board(
 
     operator fun get(str: String) = board[toPosition(str)].state
 
-    private fun toPosition(str: String): Int {
+    fun toPosition(str: String): Int {
         require((str.length == 2) || (str.length == 3 && str.indexOfFirst{ it.isLetter() } != 1)){"Invalid format"}
         val column: Int? = str.find{ it.isLetter() }?.lowercaseChar()?.code?.minus('a'.code)
         val row: Int? = str.filter{ it.isDigit()}.toIntOrNull()?.minus(1)

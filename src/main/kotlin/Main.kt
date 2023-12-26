@@ -2,7 +2,9 @@ import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.*
+import androidx.compose.material.Button
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.Dp
@@ -16,10 +18,10 @@ import model.Game
 import model.Player
 import mongo.MongoDriver
 import androidx.compose.ui.graphics.Color
+import kotlinx.coroutines.launch
 import model.Cell
 import model.State
 import viewModel.AppViewModel
-
 
 
 
@@ -35,55 +37,25 @@ fun FrameWindowScope.App(driver: MongoDriver, exitFunction: () -> Unit) {
 
     MenuBar {
         Menu("Game") {
-            //Item("Start Game", onClick = vm::showNewGameDialog)
+            Item("Start Game", onClick = vm::showNewGameDialog)
             Item("Join Game", onClick = vm::showJoinGameDialog)
             Item("Exit", onClick = {vm::exit; exitFunction()})
         }
         Menu("Play"){
-            //Item("Pass", onClick = vm::passRoundGame)
-            //Item("Show Captures", onClick = vm::showCaptures)
+            Item("Pass", onClick = {vm::passRound})
+            Item("Show Captures", onClick = vm::showCaptures)
             Item("Show Final Score", onClick = vm::showScore)
         }
         Menu("Options"){
-            //Item("Show Last Played", onClick = vm::showLastPlayed)
+            Item("Show Last Played", onClick = vm::showLastPlayed)
         }
     }
     MaterialTheme{
-        background()
-       // Column(horizontalAlignment = Alignment.CenterHorizontally){
-        vm.inputName?.let{
-            StartOrJoinDialog(
-                type = it,
-                onCancel = vm::cancelInput,
-                onAction = if(it == AppViewModel.InputName.NEW) vm::newGame else vm::joinGame
-            )
-       }
-    }
-}
+        Column(horizontalAlignment = Alignment.CenterHorizontally){
 
-@OptIn(ExperimentalMaterialApi::class)
-@Composable
-fun StartOrJoinDialog(type: AppViewModel.InputName, onCancel: () -> Unit, onAction: (String) -> Unit){
-        var name by remember { mutableStateOf(" ") }
-        AlertDialog(
-            onDismissRequest = onCancel,
-            title= {Text(text = "Name to ${type.txt}",
-                style = MaterialTheme.typography.h5)},
-
-            text={ OutlinedTextField(
-                value= name,
-                onValueChange = {name=it},
-                label= {Text("Name of game")}
-            )},
-            confirmButton = {
-                TextButton(enabled =true,
-                    onClick={onAction(name)}){Text(type.txt)}
-
-            },
-            dismissButton = {
-                TextButton(onClick = onCancel){Text("Cancel")}
-            })
         }
+    }
+
 
 
 
@@ -101,16 +73,9 @@ fun StartOrJoinDialog(type: AppViewModel.InputName, onCancel: () -> Unit, onActi
 
 
 
-
-
-@Composable
-fun background(){
-    Image(
-        painter=painterResource("board.png"),
-        contentDescription = "board",
-        modifier=Modifier.size(BOARD_SIDE)
-    )
 }
+
+
 @Composable
 fun BoardView(board: Board, onClick: (Cell)->Unit) =
     Column(

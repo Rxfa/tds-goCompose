@@ -23,12 +23,19 @@ class RunningMatch(
     gs: GameStorage,
     val id: String,
     val me: Player,
-    val game: Game
+    val game: Game,
 ): Match(gs) {
 
     suspend fun play(move: String): Match {
         check(game.isMyTurn(me)){ "It's not your turn" }
         val updatedGame = game.move(move)
+        gs.update(id, updatedGame)
+        return RunningMatch(gs, id, me, updatedGame)
+    }
+
+    suspend fun pass():Match{
+        check(game.isMyTurn(me)){ "It's not your turn" }
+        val updatedGame = game.pass()
         gs.update(id, updatedGame)
         return RunningMatch(gs, id, me, updatedGame)
     }
@@ -44,6 +51,10 @@ class RunningMatch(
     suspend fun delete(){
         if(game.IamOwner(me))
             gs.delete(id)
+    }
+
+    fun isOver():Boolean{
+        return game.stateOfGame()
     }
 
     fun newBoard(): RunningMatch {

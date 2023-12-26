@@ -54,9 +54,9 @@ data class Game(
         return copy(board = board, captures = (captures plus pair))
     }
 
-    internal fun score()=(blackScore to 0.0) plusDouble  board.countTerritory() plusDouble  captures
+    fun score()=(blackScore to 0.0) plusDouble  board.countTerritory() plusDouble  captures
 
-    private fun pass()=copy(board=board.pass())
+    fun pass()=copy(board=board.pass())
 
     private suspend fun saveBoard(name:String) =
         JsonFileStorage<String, Game>("games/", GameSerializer).create(name, this).also {
