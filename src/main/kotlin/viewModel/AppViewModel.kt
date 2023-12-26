@@ -30,7 +30,7 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
 
     var lastPlayed: Int?=null
 
-    val isOver=(match as? RunningMatch)?.isOver()
+    val isOver=(match as RunningMatch).isOver()
 
     val score: Pair<Double,Double>?=  (match as? RunningMatch)?.game?.score()
 

@@ -43,17 +43,22 @@ fun FrameWindowScope.App(driver: MongoDriver, exitFunction: () -> Unit) {
         }
         Menu("Play"){
             Item("Pass", onClick = {vm::passRound})
-            Item("Show Captures", onClick = vm::showCaptures)
-            Item("Show Final Score", onClick = vm::showScore)
+            Item("Show Captures",enabled=!vm.isOver, onClick = vm::showCaptures)
+            Item("Show Final Score", enabled = vm.isOver,onClick = vm::showScore)
         }
         Menu("Options"){
             Item("Show Last Played", onClick = vm::showLastPlayed)
         }
     }
     MaterialTheme{
-        Column(horizontalAlignment = Alignment.CenterHorizontally){
+        //Column(horizontalAlignment = Alignment.CenterHorizontally){
 
-        }
+            Image(
+                painter=painterResource("board.png"),
+                contentDescription = "board",
+                modifier=Modifier.size(BOARD_SIDE)
+            )
+
     }
 
 
