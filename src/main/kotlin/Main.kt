@@ -18,6 +18,7 @@ import model.Game
 import model.Player
 import mongo.MongoDriver
 import androidx.compose.ui.graphics.Color
+import kotlinx.coroutines.launch
 import model.Cell
 import model.State
 import viewModel.AppViewModel
@@ -36,17 +37,17 @@ fun FrameWindowScope.App(driver: MongoDriver, exitFunction: () -> Unit) {
 
     MenuBar {
         Menu("Game") {
-            //Item("Start Game", onClick = vm::showNewGameDialog)
+            Item("Start Game", onClick = vm::showNewGameDialog)
             Item("Join Game", onClick = vm::showJoinGameDialog)
             Item("Exit", onClick = {vm::exit; exitFunction()})
         }
         Menu("Play"){
-            //Item("Pass", onClick = vm::passRoundGame)
-            //Item("Show Captures", onClick = vm::showCaptures)
+            Item("Pass", onClick = {vm::passRound})
+            Item("Show Captures", onClick = vm::showCaptures)
             Item("Show Final Score", onClick = vm::showScore)
         }
         Menu("Options"){
-            //Item("Show Last Played", onClick = vm::showLastPlayed)
+            Item("Show Last Played", onClick = vm::showLastPlayed)
         }
     }
     MaterialTheme{
@@ -73,6 +74,7 @@ fun FrameWindowScope.App(driver: MongoDriver, exitFunction: () -> Unit) {
 
 
 }
+
 
 @Composable
 fun BoardView(board: Board, onClick: (Cell)->Unit) =
