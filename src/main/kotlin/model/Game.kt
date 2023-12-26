@@ -10,7 +10,7 @@ import kotlin.system.exitProcess
 
 @Serializable
 data class Game(
-    private val board: Board = Board(),
+    val board: Board = Board(),
     private val captures: Pair<Int, Int> = 0 to 0
     ){
 

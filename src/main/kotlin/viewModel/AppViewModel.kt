@@ -25,7 +25,7 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
 
     val board: Board? get() = (match as? RunningMatch)?.game?.board
 
-    val score: Nothing = TODO()
+    //val score: Nothing = TODO()
 
     val me: Player? get() = (match as? RunningMatch)?.me
 
