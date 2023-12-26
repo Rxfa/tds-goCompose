@@ -11,6 +11,15 @@ import kotlinx.coroutines.flow.toList
 import mongo.Collection
 import org.dotenv.vault.dotenvVault
 import java.io.Closeable
+import org.bson.Document
+import com.mongodb.MongoClientSettings
+import com.mongodb.ServerApi
+import com.mongodb.ServerApiVersion
+import kotlinx.coroutines.runBlocking
+
+
+
+
 
 val dotenv = dotenvVault()
 
@@ -18,14 +27,38 @@ class MongoDriver (name: String? = null): Closeable {
     val database: MongoDatabase
     private val client: MongoClient
     init{
+        /*
         val envConn =
             dotenv["MONGO_DB_CONN"] ?: throw MongoClientException("A MongoDB connection string is required")
         val dbName = requireNotNull(name ?: ConnectionString(envConn).database){
             "Database name is required in either the constructor or the connection string"
         }
+
+
         client = MongoClient.create(envConn)
         database = client.getDatabase(dbName)
+
+         */
+        val connectionString =
+            dotenv["MONGO_DB_CONN"] ?: throw MongoClientException("A MongoDB connection string is required")
+        val serverApi = ServerApi.builder()
+            .version(ServerApiVersion.V1)
+            .build()
+        val mongoClientSettings = MongoClientSettings.builder()
+            .applyConnectionString(ConnectionString(connectionString))
+            .serverApi(serverApi)
+            .build()
+        // Create a new client and connect to the server
+        MongoClient.create(mongoClientSettings).use { mongoClient ->
+            client=mongoClient
+            database = mongoClient.getDatabase("admin")
+            runBlocking {
+                database.runCommand(Document("ping", 1))
+            }
+            println("Pinged your deployment. You successfully connected to MongoDB!")
+        }
     }
+
 
     override fun close() = client.close()
 }

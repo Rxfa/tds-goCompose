@@ -10,16 +10,16 @@ import kotlin.system.exitProcess
 
 @Serializable
 data class Game(
-    val board: Board = Board(),
+    private val board: Board = Board(),
     private val captures: Pair<Int, Int> = 0 to 0
     ){
 
     private val isOver = board.pass == true to true
 
-
     internal fun IamOwner(player: Player) = player == Player.WHITE
 
     internal fun isMyTurn(player: Player) = board.player == player
+
 
     suspend fun execute(command:String): Game {
         val splitInput=command.split(" ")
