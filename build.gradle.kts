@@ -22,7 +22,6 @@ dependencies {
     // compose.desktop.currentOs should be used in launcher-sourceSet
     // (in a separate module for demo project and in testMain).
     // With compose.desktop.common you will also lose @Preview functionality
-
     implementation(compose.desktop.currentOs)
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
@@ -30,6 +29,7 @@ dependencies {
     implementation("com.github.dotenv-org:dotenv-vault-kotlin:0.0.2")
     testImplementation("junit:junit:4.13.1")
     testImplementation("org.junit.jupiter:junit-jupiter:5.8.1")
+    implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.20.0")
 }
 
 compose.desktop {

@@ -42,7 +42,11 @@ fun FrameWindowScope.App(driver: MongoDriver, exitFunction: () -> Unit) {
             Item("Exit", onClick = {vm::exit; exitFunction()})
         }
         Menu("Play"){
-            Item("Pass", onClick = {vm::passRound})
+            Item("Pass", onClick = {
+                scope.launch {
+                    vm.passRound()
+                }
+            })
             Item("Show Captures",enabled=!vm.isOver, onClick = vm::showCaptures)
             Item("Show Final Score", enabled = vm.isOver,onClick = vm::showScore)
         }

@@ -26,11 +26,12 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
     var errorMessage by mutableStateOf<String?>(null) //ErrorDialog state
         private set
 
-    val board: Board? get() = (match as? RunningMatch)?.game?.board
+    val game: Game? get() = (match as? RunningMatch)?.game
+
 
     var lastPlayed: Int?=null
 
-    val isOver=(match as RunningMatch).isOver()
+    val isOver:Boolean get()=game?.stateOfGame()==true
 
     val score: Pair<Double,Double>?=  (match as? RunningMatch)?.game?.score()
 
