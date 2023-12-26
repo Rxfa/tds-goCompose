@@ -1,6 +1,7 @@
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Button
@@ -20,7 +21,7 @@ import mongo.MongoDriver
 import androidx.compose.ui.graphics.Color
 import model.Cell
 import model.State
-import viewModel.AppViewModel
+//import viewModel.AppViewModel
 
 
 
@@ -31,25 +32,29 @@ val BOARD_SIDE = CELL_SIDE * BOARD_SIZE + GRID_THICKNESS* (BOARD_SIZE-1)
 @Composable
 @Preview
 fun FrameWindowScope.App(driver: MongoDriver, exitFunction: () -> Unit) {
-    val scope= rememberCoroutineScope()
-    val vm = remember { AppViewModel(driver,scope) }
+    //val scope= rememberCoroutineScope()
+    //val vm = remember { AppViewModel(driver,scope) }
+    var game=Game()
+
+
     MenuBar {
         Menu("Game") {
-            Item("Start Game", onClick = vm::showNewGameDialog)
-            Item("Join Game", onClick = vm::showJoinGameDialog)
-            Item("Exit", onClick = {vm::exit;exitFunction()})
+           // Item("Start Game", onClick = vm::showNewGameDialog)
+            //Item("Join Game", onClick = vm::showJoinGameDialog)
+            //Item("Exit", onClick = {vm::exit;exitFunction()})
         }
         Menu("Play"){
-            Item("Pass", onClick = vm::passRoundGame)
-            Item("Show Captures", enabled = !vm::checkIfGameIsOver, onClick = vm::showCaptures)
-            Item("Show Final Score",enabled= vm::checkIfGameIsOver, onClick = vm::showScore)
+          //  Item("Pass", onClick = vm::passRoundGame)
+           // Item("Show Captures", enabled = !vm::checkIfGameIsOver, onClick = vm::showCaptures)
+           // Item("Show Final Score",enabled= vm::checkIfGameIsOver, onClick = vm::showScore)
         }
         Menu("Options"){
-            Item("Show Last Played", onClick = vm::showLastPlayed)
+            //Item("Show Last Played", onClick = vm::showLastPlayed)
         }
     }
     MaterialTheme{
         background()
+
     }
 
 
@@ -70,7 +75,11 @@ fun background(){
         Row{
             Box(modifier = Modifier.size(CELL_SIDE))
             repeat(BOARD_SIZE){
-
+                Box(
+                    modifier = Modifier
+                        .size(CELL_SIDE)
+                        .border(GRID_THICKNESS, color = Color.Black)
+                )
             }
         }
     }

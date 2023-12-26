@@ -9,7 +9,7 @@ import model.Game
 import mongo.MongoDriver
 import storage.GameSerializer
 import storage.MongoStorage
-
+/*
 class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
 
     private val storage = MongoStorage<String, Game>("games", driver, GameSerializer)
@@ -111,3 +111,5 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
     }
 
 }
+
+ */

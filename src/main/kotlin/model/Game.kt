@@ -16,7 +16,7 @@ data class Game(
 
     private val isOver = board.pass == true to true
 
-    fun execute(command:String): Game {
+    suspend fun execute(command:String): Game {
         val splitInput=command.split(" ")
         return when(splitInput[0]){
             "new" -> Game()
@@ -53,12 +53,13 @@ data class Game(
 
     private fun pass()=copy(board=board.pass())
 
-    private fun saveBoard(name:String) =
+
+    private suspend fun saveBoard(name:String) =
         JsonFileStorage<String, Game>("games/", GameSerializer).create(name, this).also {
             println("Game saved successfully")
         }
 
-    private fun loadBoard(name: String): Game =
+    private suspend fun loadBoard(name: String): Game =
         JsonFileStorage<String, Game>("games/", GameSerializer).read(name)
 
 
