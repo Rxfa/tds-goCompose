@@ -16,6 +16,11 @@ data class Game(
 
     private val isOver = board.pass == true to true
 
+    internal fun IamOwner(player: Player) = player == Player.WHITE
+
+    internal fun isMyTurn(player: Player) = board.player == player
+
+
     suspend fun execute(command:String): Game {
         val splitInput=command.split(" ")
         return when(splitInput[0]){
@@ -52,7 +57,6 @@ data class Game(
     internal fun score()=(blackScore to 0.0) plusDouble  board.countTerritory() plusDouble  captures
 
     private fun pass()=copy(board=board.pass())
-
 
     private suspend fun saveBoard(name:String) =
         JsonFileStorage<String, Game>("games/", GameSerializer).create(name, this).also {
