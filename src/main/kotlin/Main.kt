@@ -65,8 +65,17 @@ fun FrameWindowScope.App(driver: MongoDriver, exitFunction: () -> Unit) {
             )
        }
 
+
+        if(vm.isWaiting) waitingIndicator()
+
     }
 }
+
+@Composable
+fun waitingIndicator()= CircularProgressIndicator(
+    Modifier.fillMaxSize().padding(30.dp),
+    strokeWidth = 15.dp
+)
 
 @Composable
 fun ScoreDialog(score: Pair<Double, Double>?, closeDialog:()-> Unit){
