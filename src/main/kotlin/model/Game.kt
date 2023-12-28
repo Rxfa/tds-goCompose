@@ -55,6 +55,7 @@ data class Game(
     }
 
     fun score()=(blackScore to 0.0) plusDouble  board.countTerritory() plusDouble  captures
+    fun getCaptures()= captures
 
     fun pass()=copy(board=board.pass())
 

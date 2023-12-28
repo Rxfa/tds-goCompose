@@ -86,3 +86,5 @@ suspend fun <T: Any, K> Collection<T>.deleteDocument(id: K): Boolean =
 
 suspend fun <T: Any, K> Collection<T>.deleteAllDocuments(): Boolean =
     collection.deleteMany(Filters.exists("_id")).wasAcknowledged()
+
+

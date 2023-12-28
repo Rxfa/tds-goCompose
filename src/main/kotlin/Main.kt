@@ -1,6 +1,7 @@
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.runtime.*
@@ -16,7 +17,7 @@ import model.Game
 import model.Player
 import mongo.MongoDriver
 import androidx.compose.ui.graphics.Color
-import kotlinx.coroutines.CoroutineScope
+import androidx.compose.ui.modifier.modifierLocalMapOf
 import kotlinx.coroutines.launch
 import model.Cell
 import model.State
@@ -40,12 +41,12 @@ fun FrameWindowScope.App(driver: MongoDriver, exitFunction: () -> Unit) {
             Item("Exit", onClick = {exitFunction()})//done
         }
         Menu("Play"){
-            Item("Pass", onClick = {vm::passRound})
-            Item("Show Captures",enabled= vm.isOver == false, onClick = vm::showCaptures)
-            Item("Show Final Score", enabled = (vm.isOver == false),onClick = vm::showScore)//done
+            Item("Pass", enabled= (vm.isRunning), onClick = {vm::passRound})
+            Item("Show Captures",/*enabled= vm.isOver == false,*/ onClick = vm::showCaptures)//done
+            Item("Show Final Score", /*enabled= vm.isOver == false,*/onClick = vm::showScore)//done
         }
         Menu("Options"){
-            Item("Show Last Played", onClick = vm::showLastPlayed)
+            Item("Show Last Played", onClick = vm::showLastPlayed)//verificar posição
         }
     }
     MaterialTheme{
@@ -54,20 +55,68 @@ fun FrameWindowScope.App(driver: MongoDriver, exitFunction: () -> Unit) {
         if (vm.viewScore) ScoreDialog(vm.score,vm::hideScore)
         vm.inputName?.let{
             StartOrJoinDialog(
-                scope = scope,
                 type = it,
                 onCancel = vm::cancelInput,
                 onAction = if(it == AppViewModel.InputName.NEW) vm::newGame else vm::joinGame
             )
        }
-
+        if(vm.viewCaptures) CapturesDialog(vm.captures,vm::hideCaptures)
+        if(vm.viewLastPlayed) ShowLastPlayed(vm.lastPlayed,vm::hideLastPlayed)
     }
+}
+@Composable
+fun ShowLastPlayed(lastPlayed: Int?, closeDialog: () -> Unit) {
+    val backgroundColor= Color.Transparent
+    if(lastPlayed==null) closeDialog
+    else{
+        drawSquare(modifier = Modifier.size(CELL_SIDE),lastPlayed,backgroundColor,Color.Red,CELL_SIDE)
+    }
+    closeDialog
 }
 
 @Composable
+fun drawSquare(modifier: Modifier,position: Int, backgroundColor:Color,borderColor: Color,size:Dp){
+    Box(
+    modifier.offset(position.dp,position.dp).size(size).background(backgroundColor).border(1.dp,borderColor)
+    )
+}
+@Composable
+fun CapturesDialog(captures: Pair<Int, Int>?,closeDialog: () -> Unit){
+    AlertDialog(
+        title={Text(text="Captures in a", style= MaterialTheme.typography.h4)},
+        onDismissRequest = closeDialog,
+        confirmButton =  { TextButton(onClick = closeDialog){ Text("Close")}},
+        text = {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+            ){
+                Column(horizontalAlignment = Alignment.CenterHorizontally){
+                    Row(verticalAlignment = Alignment.CenterVertically){
+                        cell(Player.BLACK.state,size = 30.dp)
+                        Text(
+                            text= " - ${captures?.first}",
+                            style = MaterialTheme.typography.h4
+                        )
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically){
+                        cell(Player.WHITE.state,size = 30.dp)
+                        Text(
+                            text= " - ${captures?.second}",
+                            style = MaterialTheme.typography.h4
+                        )
+                    }
+                }
+        }
+
+        }
+
+    )
+}
+@Composable
 fun ScoreDialog(score: Pair<Double, Double>?, closeDialog:()-> Unit){
     AlertDialog(
-        title={Text(text="Scores in a", style= MaterialTheme.typography.h4)},
+        title={Text(text="Score in a", style= MaterialTheme.typography.h4)},
         onDismissRequest = closeDialog,
         confirmButton = {TextButton(onClick = closeDialog){Text("Close")} },
         text= {Row(
@@ -75,27 +124,28 @@ fun ScoreDialog(score: Pair<Double, Double>?, closeDialog:()-> Unit){
             horizontalArrangement = Arrangement.SpaceBetween
             ){
             Column(horizontalAlignment = Alignment.CenterHorizontally){
-                Player.entries.forEach{player ->
+                Row(verticalAlignment = Alignment.CenterVertically){
+                    cell(Player.BLACK.state,size = 30.dp)
+                    Text(
+                        text= " - ${score?.first}",
+                        style = MaterialTheme.typography.h4
+                    )
+                }
                     Row(verticalAlignment = Alignment.CenterVertically){
-                        cell(player.state,size = 30.dp)
+                        cell(Player.WHITE.state,size = 30.dp)
                         Text(
                             text= " - ${score?.second}",
                             style = MaterialTheme.typography.h4
                         )
                     }
-                }
-                Text(
-                    text = "Draws - ${score?.second}",
-                    style = MaterialTheme.typography.h4
-                )
             }
         }}
     )
 }
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun StartOrJoinDialog(scope:CoroutineScope, type: AppViewModel.InputName, onCancel: () -> Unit, onAction: KSuspendFunction1<String, Unit>){
-        rememberCoroutineScope()
+fun StartOrJoinDialog( type: AppViewModel.InputName, onCancel: () -> Unit, onAction: KSuspendFunction1<String, Unit>){
+        val newscope=rememberCoroutineScope()
         var name by remember { mutableStateOf(" ") }
 
         AlertDialog(
@@ -109,8 +159,8 @@ fun StartOrJoinDialog(scope:CoroutineScope, type: AppViewModel.InputName, onCanc
                 label= {Text("Name of game")}
             )},
             confirmButton = {
-                TextButton(enabled =true,
-                    onClick={scope.launch{onAction(name)}}){Text(type.txt)}
+                TextButton(enabled = true,
+                    onClick={newscope.launch{onAction(name)}}){Text(type.txt)}
             },
             dismissButton = {
                 TextButton(onClick = onCancel){Text("Cancel")}

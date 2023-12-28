@@ -25,7 +25,7 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
         private set
     var errorMessage by mutableStateOf<String?>(null) //ErrorDialog state
         private set
-
+    var viewLastPlayed by mutableStateOf(false)
     val board: Board? get() = (match as? RunningMatch)?.game?.board
 
     var lastPlayed: Int?=null
@@ -33,6 +33,8 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
     val isOver=(match as? RunningMatch)?.isOver()
 
     val score: Pair<Double,Double>?=  (match as? RunningMatch)?.game?.score()
+
+    val captures: Pair<Int,Int>?= (match as? RunningMatch)?.game?.getCaptures()
 
     val me: Player? get() = (match as? RunningMatch)?.me
 
@@ -73,12 +75,16 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
 
         match = match.create(gameName)
         inputName = null
+
+        waitForOtherSide()
     }
 
     fun showLastPlayed(){
-         lastPlayed
+        viewLastPlayed=true
     }
-
+    fun hideLastPlayed(){
+        viewLastPlayed=false
+    }
     suspend fun joinGame(gameName: String) {
         cancelWaiting()
 
