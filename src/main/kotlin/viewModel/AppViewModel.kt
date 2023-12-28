@@ -79,11 +79,9 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
         waitForOtherSide()
     }
 
-    fun showLastPlayed(){
-        viewLastPlayed=true
-    }
-    fun hideLastPlayed(){
-        viewLastPlayed=false
+    fun toggleLastPlayed(){
+        if(viewLastPlayed)viewLastPlayed=false
+        else viewLastPlayed=true
     }
     suspend fun joinGame(gameName: String) {
         cancelWaiting()

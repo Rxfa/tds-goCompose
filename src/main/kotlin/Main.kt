@@ -46,10 +46,12 @@ fun FrameWindowScope.App(driver: MongoDriver, exitFunction: () -> Unit) {
             Item("Show Final Score", /*enabled= vm.isOver == false,*/onClick = vm::showScore)//done
         }
         Menu("Options"){
-            Item("Show Last Played", onClick = vm::showLastPlayed)//verificar posição
+            CheckboxItem("Show Last Played",checked = vm.viewLastPlayed, onCheckedChange = { vm::toggleLastPlayed })
         }
     }
-    MaterialTheme{
+
+
+MaterialTheme{
         background()
        // Column(horizontalAlignment = Alignment.CenterHorizontally){
         if (vm.viewScore) ScoreDialog(vm.score,vm::hideScore)
@@ -61,17 +63,18 @@ fun FrameWindowScope.App(driver: MongoDriver, exitFunction: () -> Unit) {
             )
        }
         if(vm.viewCaptures) CapturesDialog(vm.captures,vm::hideCaptures)
-        if(vm.viewLastPlayed) ShowLastPlayed(vm.lastPlayed,vm::hideLastPlayed)
+        if(vm.viewLastPlayed) ShowLastPlayed(vm.lastPlayed, vm::cancelInput,vm.viewLastPlayed)
     }
 }
 @Composable
-fun ShowLastPlayed(lastPlayed: Int?, closeDialog: () -> Unit) {
+fun ShowLastPlayed(lastPlayed: Int?, closeDialog: () -> Unit,viewLastPlayed:Boolean) {
     val backgroundColor= Color.Transparent
-    if(lastPlayed==null) closeDialog
-    else{
-        drawSquare(modifier = Modifier.size(CELL_SIDE),lastPlayed,backgroundColor,Color.Red,CELL_SIDE)
+    if(lastPlayed!=null && viewLastPlayed) {
+        drawSquare(modifier = Modifier.size(CELL_SIDE), lastPlayed, backgroundColor, Color.Red, CELL_SIDE)
     }
-    closeDialog
+    else{
+        closeDialog
+    }
 }
 
 @Composable
