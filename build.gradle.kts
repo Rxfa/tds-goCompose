@@ -25,11 +25,12 @@ dependencies {
     implementation(compose.desktop.currentOs)
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
-    implementation("org.mongodb:mongodb-driver-kotlin-coroutine:4.10.1")
+    //implementation("org.mongodb:mongodb-driver-kotlin-coroutine:4.10.1")
     implementation("com.github.dotenv-org:dotenv-vault-kotlin:0.0.2")
     testImplementation("junit:junit:4.13.1")
     testImplementation("org.junit.jupiter:junit-jupiter:5.8.1")
     implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.20.0")
+    implementation("org.mongodb:mongodb-driver-kotlin-sync:4.11.0")
 }
 
 compose.desktop {

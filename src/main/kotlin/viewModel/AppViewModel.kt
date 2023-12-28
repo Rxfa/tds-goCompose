@@ -4,9 +4,9 @@ package viewModel
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import mongo.MongoDriver
 import kotlinx.coroutines.*
 import model.*
-import mongo.MongoDriver
 import storage.GameSerializer
 import storage.MongoStorage
 
@@ -70,6 +70,7 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
 
     fun cancelInput() { inputName = null }
     suspend fun newGame(gameName: String) {
+
         cancelWaiting()
 
         match = match.create(gameName)

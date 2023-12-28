@@ -6,41 +6,42 @@ import storage.Storage
 
 typealias GameStorage = Storage<String, Game>
 
-open class Match(val gs: GameStorage){
-    suspend fun create(id: String): RunningMatch {
+open class Match(val gs: GameStorage)
+    suspend fun Match.create(id: String): RunningMatch {
         val game = Game()
+
         gs.create(id, game)
         return RunningMatch(gs, id, Player.BLACK, game)
     }
 
-    suspend fun join(id: String): RunningMatch {
+    suspend fun Match.join(id: String): RunningMatch {
         val game = gs.read(id) ?: error("Match $id not found")
         return RunningMatch(gs, id, Player.WHITE, game)
     }
-}
+
 
 class RunningMatch(
     gs: GameStorage,
     val id: String,
     val me: Player,
     val game: Game,
-): Match(gs) {
+): Match(gs)
 
-    suspend fun play(move: String): Match {
+    suspend fun RunningMatch.play(move: String): Match {
         check(game.isMyTurn(me)){ "It's not your turn" }
         val updatedGame = game.move(move)
         gs.update(id, updatedGame)
         return RunningMatch(gs, id, me, updatedGame)
     }
 
-    suspend fun pass():Match{
+    suspend fun RunningMatch.pass():Match{
         check(game.isMyTurn(me)){ "It's not your turn" }
         val updatedGame = game.pass()
         gs.update(id, updatedGame)
         return RunningMatch(gs, id, me, updatedGame)
     }
 
-    suspend fun refresh(): RunningMatch {
+    suspend fun RunningMatch.refresh(): RunningMatch {
         val updatedGame = gs.slowRead(id) ?: throw GameDeletedException()
 
         if(game == updatedGame)
@@ -48,22 +49,22 @@ class RunningMatch(
         return RunningMatch(gs, id , me, updatedGame)
     }
 
-    suspend fun delete(){
+    suspend fun RunningMatch.delete(){
         if(game.IamOwner(me))
             gs.delete(id)
     }
 
-    fun isOver():Boolean{
+    fun RunningMatch.isOver():Boolean{
         return game.stateOfGame()
     }
 
-    fun newBoard(): RunningMatch {
+    fun RunningMatch.newBoard(): RunningMatch {
         val newGame = game //TODO
         return RunningMatch(gs, id, me, newGame)
     }
 
-    fun isMyTurn() = game.isMyTurn(me)
-}
+    fun RunningMatch.isMyTurn() = game.isMyTurn(me)
+
 
 suspend fun GameStorage.slowRead(key: String): Game? {
     fun log(label: String) = println(

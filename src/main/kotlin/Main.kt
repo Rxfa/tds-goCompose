@@ -2,9 +2,7 @@ import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.Button
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
+import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.Dp
@@ -16,14 +14,14 @@ import androidx.compose.ui.window.*
 import model.Board
 import model.Game
 import model.Player
-import mongo.MongoDriver
 import androidx.compose.ui.graphics.Color
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import model.Cell
 import model.State
 import viewModel.AppViewModel
-
-
+import kotlin.reflect.KSuspendFunction1
+import mongo.MongoDriver
 
 
 val CELL_SIDE = 100.dp
@@ -100,8 +98,8 @@ fun ScoreDialog(score: Pair<Double, Double>?, closeDialog:()-> Unit){
 }
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun StartOrJoinDialog(scope:CoroutineScope, type: AppViewModel.InputName, onCancel: () -> Unit, onAction: KSuspendFunction1<String, Unit>){
-        rememberCoroutineScope()
+fun StartOrJoinDialog(scope: CoroutineScope, type: AppViewModel.InputName, onCancel: () -> Unit, onAction: KSuspendFunction1<String, Unit>){
+        //rememberCoroutineScope()
         var name by remember { mutableStateOf(" ") }
 
         AlertDialog(
@@ -227,7 +225,6 @@ fun main() = application {
 
         }
     }
-    println("oi")
 }
 
 /*
