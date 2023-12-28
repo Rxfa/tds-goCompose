@@ -4,9 +4,9 @@ package viewModel
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import mongo.MongoDriver
 import kotlinx.coroutines.*
 import model.*
-import mongo.MongoDriver
 import storage.GameSerializer
 import storage.MongoStorage
 
@@ -18,14 +18,27 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
     //    var game by mutableStateOf(Game())
     var viewScore by mutableStateOf(false)
         private set
+
+    var viewCaptures by mutableStateOf(false)
+        private set
     var inputName by mutableStateOf<InputName?>(null)
         private set
     var errorMessage by mutableStateOf<String?>(null) //ErrorDialog state
         private set
 
-    val board: Board? get() = (match as? RunningMatch)?.game?.board
+    var viewLastPlayed by mutableStateOf(false)
 
-    val score: Nothing = TODO()
+    val game: Game? get() = (match as? RunningMatch)?.game
+
+    val board:Board? get()=game?.board
+
+    var lastPlayed: Int?=null
+
+    val captures: Pair<Int,Int>?= game?.getCaptures()
+
+    val isOver:Boolean get()=game?.stateOfGame()==true
+
+    val score: Pair<Double,Double>?=  game?.score()
 
     val me: Player? get() = (match as? RunningMatch)?.me
 
@@ -42,11 +55,15 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
     fun showScore(){ viewScore = true}
     fun hideScore(){ viewScore = false}
 
+    fun showCaptures(){viewCaptures=true}
+
+    fun hideCaptures(){viewCaptures=false}
     fun hideError() { errorMessage = null }
 
     suspend fun play(pos: String){
         try {
             match = (match as RunningMatch).play(pos)
+            lastPlayed=(match as RunningMatch).game.board.toPosition(pos)
         } catch (e: Exception) {
             errorMessage = e.message
         }
@@ -58,10 +75,16 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
 
     fun cancelInput() { inputName = null }
     suspend fun newGame(gameName: String) {
+
         cancelWaiting()
 
         match = match.create(gameName)
         inputName = null
+    }
+
+    fun showLastPlayed(){
+        if(viewLastPlayed)viewLastPlayed=false
+        else viewLastPlayed=true
     }
 
     suspend fun joinGame(gameName: String) {
@@ -70,6 +93,16 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
         match = match.join(gameName)
         inputName = null
 
+        waitForOtherSide()
+    }
+
+    suspend fun passRound(){
+        try{
+            match=(match as RunningMatch).pass()
+            lastPlayed=null
+        } catch (e: Exception) {
+            errorMessage = e.message
+        }
         waitForOtherSide()
     }
 
