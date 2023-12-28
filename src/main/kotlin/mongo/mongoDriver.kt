@@ -10,8 +10,6 @@ import com.mongodb.kotlin.client.MongoDatabase
 import org.dotenv.vault.dotenvVault
 import java.io.Closeable
 
-private const val ENV_CONNECTION = "MONGO_CONNECTION"
-
 val dotenv = dotenvVault()
 
 
