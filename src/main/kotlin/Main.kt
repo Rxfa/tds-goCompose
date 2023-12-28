@@ -386,6 +386,5 @@ fun main() = application {
         val driver = MongoDriver()
         App(driver, ::exitApplication)
 
-
     }
 }
