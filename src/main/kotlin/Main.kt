@@ -78,7 +78,7 @@ fun FrameWindowScope.App(driver: MongoDriver, exitFunction: () -> Unit) {
 fun ShowLastPlayed(lastPlayed: Int?, closeDialog: () -> Unit,viewLastPlayed:Boolean) {
     val backgroundColor= Color.Transparent
     if(lastPlayed!=null && viewLastPlayed) {
-        drawSquare(modifier = Modifier.size(CELL_SIDE), lastPlayed, backgroundColor, Color.Red, CELL_SIDE)
+        drawSquare(modifier = Modifier.size(CELL_SIZE.dp), lastPlayed, backgroundColor, Color.Red, CELL_SIZE.dp)
     }
     else{
         closeDialog
