@@ -47,6 +47,10 @@ data class Game(
         return isOver
     }
 
+    fun getCaptures():Pair<Int,Int>{
+        return captures
+    }
+
     fun move(move: String): Game {
         require(!isOver){"Game over"}
         val (board, c) = board.play(move)

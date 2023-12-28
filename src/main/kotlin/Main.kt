@@ -1,6 +1,8 @@
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.runtime.*
@@ -15,6 +17,7 @@ import model.Board
 import model.Game
 import model.Player
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import model.Cell
@@ -24,9 +27,7 @@ import kotlin.reflect.KSuspendFunction1
 import mongo.MongoDriver
 
 
-val CELL_SIDE = 100.dp
-val GRID_THICKNESS = 5.dp
-val BOARD_SIDE = CELL_SIDE * BOARD_SIZE + GRID_THICKNESS* (BOARD_SIZE-1)
+
 @Composable
 @Preview
 fun FrameWindowScope.App(driver: MongoDriver, exitFunction: () -> Unit) {
@@ -40,7 +41,7 @@ fun FrameWindowScope.App(driver: MongoDriver, exitFunction: () -> Unit) {
             Item("Exit", onClick = {vm::exit; exitFunction()})
         }
         Menu("Play"){
-            Item("Pass", onClick = {
+            Item("Pass", enabled=vm.isRunning,onClick = {
                 scope.launch {
                     vm.passRound()
                 }
@@ -53,7 +54,7 @@ fun FrameWindowScope.App(driver: MongoDriver, exitFunction: () -> Unit) {
         }
     }
     MaterialTheme{
-        background()
+        background(vm)
        // Column(horizontalAlignment = Alignment.CenterHorizontally){
         if (vm.viewScore) ScoreDialog(vm.score,vm::hideScore)
         vm.inputName?.let{
@@ -65,10 +66,61 @@ fun FrameWindowScope.App(driver: MongoDriver, exitFunction: () -> Unit) {
             )
        }
 
-
+        if(vm.viewCaptures) CapturesDialog(vm.captures,vm::hideCaptures)
+        if(vm.viewLastPlayed) ShowLastPlayed(vm.lastPlayed, vm::cancelInput,vm.viewLastPlayed)
         if(vm.isWaiting) waitingIndicator()
 
     }
+}
+
+@Composable
+fun ShowLastPlayed(lastPlayed: Int?, closeDialog: () -> Unit,viewLastPlayed:Boolean) {
+    val backgroundColor= Color.Transparent
+    if(lastPlayed!=null && viewLastPlayed) {
+        drawSquare(modifier = Modifier.size(CELL_SIDE), lastPlayed, backgroundColor, Color.Red, CELL_SIDE)
+    }
+    else{
+        closeDialog
+    }
+}
+@Composable
+fun drawSquare(modifier: Modifier,position: Int, backgroundColor:Color,borderColor: Color,size:Dp){
+    Box(
+        modifier.offset(position.dp,position.dp).size(size).background(backgroundColor).border(1.dp,borderColor)
+    )
+}
+@Composable
+fun CapturesDialog(captures: Pair<Int, Int>?,closeDialog: () -> Unit){
+    AlertDialog(
+        title={Text(text="Captures in a", style= MaterialTheme.typography.h4)},
+        onDismissRequest = closeDialog,
+        confirmButton =  { TextButton(onClick = closeDialog){ Text("Close")}},
+        text = {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ){
+                Column(horizontalAlignment = Alignment.CenterHorizontally){
+                    Row(verticalAlignment = Alignment.CenterVertically){
+                        cell(Player.BLACK.state,size = 30.dp,{})
+                        Text(
+                            text= " - ${captures?.first}",
+                            style = MaterialTheme.typography.h4
+                        )
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically){
+                        cell(Player.WHITE.state,size = 30.dp,{})
+                        Text(
+                            text= " - ${captures?.second}",
+                            style = MaterialTheme.typography.h4
+                        )
+                    }
+                }
+            }
+
+        }
+
+    )
 }
 
 @Composable
@@ -90,7 +142,7 @@ fun ScoreDialog(score: Pair<Double, Double>?, closeDialog:()-> Unit){
             Column(horizontalAlignment = Alignment.CenterHorizontally){
                 Player.entries.forEach{player ->
                     Row(verticalAlignment = Alignment.CenterVertically){
-                        cell(player.state,size = 30.dp)
+                        cell(player.state,size = 30.dp,{})
                         Text(
                             text= " - ${score?.second}",
                             style = MaterialTheme.typography.h4
@@ -132,79 +184,159 @@ fun StartOrJoinDialog(scope: CoroutineScope, type: AppViewModel.InputName, onCan
 
 
 
-    /*
-    var text by remember { mutableStateOf("Hello, World!") }
-    MaterialTheme {
-        Button(onClick = {
-            text = "Hello, Desktop!"
-        }) {
-            Text(text)
+@Composable
+fun background(vm: AppViewModel){
+    Box(modifier = Modifier.fillMaxSize()){
+        Image(
+            painter = painterResource("board.png"),
+            contentDescription = "board_description",
+            modifier = Modifier.matchParentSize(),
+            contentScale = ContentScale.FillBounds
+        )
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.SpaceBetween,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Spacer(modifier = Modifier.height(CELL_LABEL))
+            BoardOverview(vm.board)
+            StatusBar(vm.game, vm.me)
         }
     }
-
-     */
-
-
-
-
-
-
+}
 @Composable
-fun background(){
-    Image(
-        painter=painterResource("board.png"),
-        contentDescription = "board",
-        modifier=Modifier.size(BOARD_SIDE)
-    )
+fun BoardOverview(board: Board?){
+    Column {
+        letters()
+        Row {
+            numbers()
+            BoardView(board, onClick = {})
+        }
+    }
 }
 
 @Composable
-fun BoardView(board: Board, onClick: (Cell)->Unit) =
-    Column(
-        modifier = Modifier
-            .background(Color.Black)
-            .size(BOARD_SIDE),
-        verticalArrangement = Arrangement.SpaceBetween
-    ) {
-        var idx=0
-        repeat(BOARD_SIZE){ row ->
+fun letters(){
+    Column(modifier = Modifier.padding(start = CELL_LABEL * 3, end = CELL_LABEL * 3, bottom = CELL_LABEL * 4)) {
+        Row(
+            modifier = Modifier.width(BOARD_SIDE).padding(end = CELL_LABEL * 2),
+        ){
+            Spacer(modifier = Modifier.width(CELL_LABEL * 4))
             Row(
-                modifier = Modifier.fillMaxWidth().height(CELL_SIDE),
+                modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
-            ){
-                repeat(BOARD_SIZE){col ->
-                    val pos = board.board[idx++]
-                    cell(
-                        pos.state,
-                        onClick = { onClick(pos)} )
+            ) {
+                repeat(BOARD_SIZE){
+                    Text("${'A' + it}", style = MaterialTheme.typography.h4)
                 }
             }
         }
     }
-
-
+}
 
 
 @Composable
-fun DownBar(game: Game?, user:Player?){
-    Row {
-        user?.let{
+fun StatusBar(game: Game?, user:Player?){
+    val horizontalArrangement = Arrangement.SpaceEvenly
+    val verticalAlignment = Alignment.CenterVertically
+    val modifier = Modifier.fillMaxWidth().background(Color.LightGray)
+    user?.let{
+        return Row(
+            horizontalArrangement = horizontalArrangement,
+            verticalAlignment = verticalAlignment,
+            modifier = modifier
+        ) {
             Text("You", style = MaterialTheme.typography.h4)
-            cell(state = it.state,size=50.dp)
-            Spacer(Modifier.width(30.dp))
+            cell(state = it.state, size = CELL_SIZE.dp, onClick = {}, onGrid = false)
         }
-        val (txt, player) = when{
-            game == null -> "Game not started" to null
-            game.stateOfGame()-> "Winner:" to game.winner()
-            else -> "Turn:" to game.showCurrentPlayer()
+    }
+    val (txt, player) = when{
+        game == null -> "Waiting for game..." to null
+        game.stateOfGame()-> "Winner:" to game.winner()
+        else -> "Turn:" to game.showCurrentPlayer()
+    }
+    Row(
+        horizontalArrangement = horizontalArrangement,
+        verticalAlignment = verticalAlignment,
+        modifier = modifier
+    ) {
+        Text(text = txt, style = MaterialTheme.typography.h4 )
+        Row(
+            verticalAlignment = verticalAlignment,
+        ) {
+            Text(text = "Player: ", style = MaterialTheme.typography.h4)
+            cell(state = player?.state, size = CELL_SIZE.dp, onClick = {}, onGrid = false)
         }
-        Text(text=txt, style=MaterialTheme.typography.h4 )
-        cell(player?.state, size = 50.dp)
+    }
+}
 
+@Composable
+fun numbers(){
+    Row{
+        Column{
+            Column(
+                modifier = Modifier.height(BOARD_SIDE).padding(bottom = CELL_LABEL * 3),
+                verticalArrangement = Arrangement.SpaceBetween
+            ){
+                repeat(BOARD_SIZE){
+                    Text("${9 - it}")
+                }
+            }
+        }
+        Spacer(modifier = Modifier.width(CELL_LABEL * 4))
     }
 }
 
 
+@Composable
+fun BoardView(board: Board?, onClick: ()->Unit){
+    val paddingStart = CELL_LABEL * 2
+    val paddingTop = paddingStart
+    Box{
+        boardWrapper(paddingStart = paddingStart, paddingTop = paddingTop)
+        boardCells(board = board, onClick = onClick, paddingStart = paddingStart, paddingTop = paddingTop)
+    }
+}
+
+
+@Composable
+fun boardCells(board: Board?, onClick: () -> Unit, paddingStart: Dp, paddingTop: Dp){
+    Column(modifier = Modifier.padding(start = paddingStart, paddingTop)) {
+        repeat(BOARD_SIZE) { row ->
+            Row {
+                repeat(BOARD_SIZE) { col ->
+                    val modifier =
+                        if (col == BOARD_SIZE - 1 || row == BOARD_SIZE - 1)
+                            Modifier.size(CELL_SIZE.dp)
+                        else
+                            Modifier
+                                .size(CELL_SIZE.dp)
+                                .offset(x = -GRID_THICKNESS, y = -GRID_THICKNESS)
+                                .border(GRID_THICKNESS, color = Color.Black)
+                    Box(modifier = modifier) {
+                        val position = "${'A' + row}${BOARD_SIZE - col}"
+                        cell(state = board?.get(position), size = CELL_SIZE.dp, onClick = onClick)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun boardWrapper(paddingStart: Dp, paddingTop: Dp){
+    Box(
+        modifier = Modifier.padding(start = paddingStart, top = paddingTop)
+            .size(((BOARD_SIZE-1) * CELL_SIZE).dp + GRID_THICKNESS * 2)
+            .offset(x = -GRID_THICKNESS * 2, y = -GRID_THICKNESS * 2)
+            .border(width = GRID_THICKNESS, color = Color.Black)
+    )
+}
+
+
+
+
+/*
 @Composable
 fun cell(state: State?, size: Dp = 100.dp, onClick:() -> Unit={} ){
     val modifier=Modifier.size(size)
@@ -222,25 +354,28 @@ fun cell(state: State?, size: Dp = 100.dp, onClick:() -> Unit={} ){
         )
 
 }
-/*
-fun main() = application {
-    MongoDriver().use { driver ->
-        Window(
-            onCloseRequest = ::exitApplication,
-            title = "Go Game",
-            state = WindowState(size = DpSize.Unspecified)
-        ) {
-            App(driver, ::exitApplication)
 
-        }
+ */
+@Composable
+fun cell(state: State?, size: Dp = CELL_SIZE.dp, onClick: () -> Unit, onGrid: Boolean = true){
+    val modifier = if(onGrid) Modifier.size(size).offset(x = -size/2, y = -size/2) else Modifier.size(size)
+    val filename = when (state){
+        State.WHITE -> "white.png"
+        State.BLACK -> "black.png"
+        else -> return Box(modifier = modifier.clickable(onClick = onClick))
     }
+    Image(
+        painter = painterResource(filename),
+        contentDescription = "player $state",
+        modifier = modifier
+    )
 }
-*/
+
 fun main() = application {
     Window(
         onCloseRequest = { exitApplication() },
         title = "Go Game",
-        state = WindowState(size = DpSize.Unspecified)
+        state = rememberWindowState(width = WIN_WIDTH.dp, height = WIN_HEIGHT.dp)
     ) {
         val driver = MongoDriver()
         App(driver, ::exitApplication)
