@@ -222,7 +222,7 @@ fun cell(state: State?, size: Dp = 100.dp, onClick:() -> Unit={} ){
         )
 
 }
-
+/*
 fun main() = application {
     MongoDriver().use { driver ->
         Window(
@@ -235,17 +235,14 @@ fun main() = application {
         }
     }
 }
-
-/*
-fun main(){
-    var game = Game()
-
-            game.show()
-            print(">")
-            game = game.execute(readln())
-        } catch (e:Exception) {
-            println(e.message)
-        }
-    } while (true)
+*/
+fun main() = application {
+    Window(
+        onCloseRequest = { exitApplication() },
+        title = "Go Game",
+        state = WindowState(size = DpSize.Unspecified)
+    ) {
+        val driver = MongoDriver()
+        App(driver, ::exitApplication)
+    }
 }
- */

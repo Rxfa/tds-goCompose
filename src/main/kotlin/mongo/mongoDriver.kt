@@ -33,7 +33,7 @@ class MongoDriver(nameDb: String? =null) : Closeable {
         //Runtime.getRuntime().addShutdownHook(Thread { client.close() })
     }
    override fun close() {
-        //client.close()
+        client.close()
         println("MongoDB connection closed successfully.")}
 }
 
