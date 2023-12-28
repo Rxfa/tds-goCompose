@@ -54,8 +54,10 @@ fun FrameWindowScope.App(driver: MongoDriver, exitFunction: () -> Unit) {
         }
     }
     MaterialTheme{
-        background(vm)
-       // Column(horizontalAlignment = Alignment.CenterHorizontally){
+       background(vm){position ->
+           scope.launch {
+                vm.play(position)
+       }}
         if (vm.viewScore) ScoreDialog(vm.score,vm::hideScore)
         vm.inputName?.let{
             StartOrJoinDialog(
@@ -65,7 +67,6 @@ fun FrameWindowScope.App(driver: MongoDriver, exitFunction: () -> Unit) {
                 onAction = if(it == AppViewModel.InputName.NEW) vm::newGame else vm::joinGame
             )
        }
-
         if(vm.viewCaptures) CapturesDialog(vm.captures,vm::hideCaptures)
         if(vm.viewLastPlayed) ShowLastPlayed(vm.lastPlayed, vm::cancelInput,vm.viewLastPlayed)
         if(vm.isWaiting) waitingIndicator()
@@ -185,7 +186,7 @@ fun StartOrJoinDialog(scope: CoroutineScope, type: AppViewModel.InputName, onCan
 
 
 @Composable
-fun background(vm: AppViewModel){
+fun background(vm: AppViewModel,onClick: (String) -> Unit){
     Box(modifier = Modifier.fillMaxSize()){
         Image(
             painter = painterResource("board.png"),
@@ -199,18 +200,18 @@ fun background(vm: AppViewModel){
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(modifier = Modifier.height(CELL_LABEL))
-            BoardOverview(vm.board)
+            BoardOverview(vm.board, onClick = onClick)
             StatusBar(vm.game, vm.me)
         }
     }
 }
 @Composable
-fun BoardOverview(board: Board?){
+fun BoardOverview(board: Board?,onClick: (String) -> Unit){
     Column {
         letters()
         Row {
             numbers()
-            BoardView(board, onClick = {})
+            BoardView(board, onClick = onClick)
         }
     }
 }
@@ -289,7 +290,7 @@ fun numbers(){
 
 
 @Composable
-fun BoardView(board: Board?, onClick: ()->Unit){
+fun BoardView(board: Board?, onClick: (String)->Unit){
     val paddingStart = CELL_LABEL * 2
     val paddingTop = paddingStart
     Box{
@@ -300,7 +301,7 @@ fun BoardView(board: Board?, onClick: ()->Unit){
 
 
 @Composable
-fun boardCells(board: Board?, onClick: () -> Unit, paddingStart: Dp, paddingTop: Dp){
+fun boardCells(board: Board?, onClick: (String) -> Unit, paddingStart: Dp, paddingTop: Dp){
     Column(modifier = Modifier.padding(start = paddingStart, paddingTop)) {
         repeat(BOARD_SIZE) { row ->
             Row {
@@ -314,8 +315,9 @@ fun boardCells(board: Board?, onClick: () -> Unit, paddingStart: Dp, paddingTop:
                                 .offset(x = -GRID_THICKNESS, y = -GRID_THICKNESS)
                                 .border(GRID_THICKNESS, color = Color.Black)
                     Box(modifier = modifier) {
+                        val scope= rememberCoroutineScope()
                         val position = "${'A' + row}${BOARD_SIZE - col}"
-                        cell(state = board?.get(position), size = CELL_SIZE.dp, onClick = onClick)
+                        cell(state = board?.get(position), size = CELL_SIZE.dp, onClick ={onClick(position)})
                     }
                 }
             }
@@ -357,18 +359,22 @@ fun cell(state: State?, size: Dp = 100.dp, onClick:() -> Unit={} ){
 
  */
 @Composable
-fun cell(state: State?, size: Dp = CELL_SIZE.dp, onClick: () -> Unit, onGrid: Boolean = true){
+fun cell(state: State?, size: Dp = CELL_SIZE.dp, onClick: () -> Unit, onGrid: Boolean = true,position:String?=null){
     val modifier = if(onGrid) Modifier.size(size).offset(x = -size/2, y = -size/2) else Modifier.size(size)
-    val filename = when (state){
-        State.WHITE -> "white.png"
-        State.BLACK -> "black.png"
-        else -> return Box(modifier = modifier.clickable(onClick = onClick))
+    if(state==null || state == State.FREE ){
+        Box(modifier = modifier.clickable(onClick = onClick))
+    }else {
+        val filename = when (state) {
+            State.WHITE -> "white.png"
+            State.BLACK -> "black.png"
+            else ->""
+        }
+        Image(
+            painter = painterResource(filename),
+            contentDescription = "player $state",
+            modifier = modifier
+        )
     }
-    Image(
-        painter = painterResource(filename),
-        contentDescription = "player $state",
-        modifier = modifier
-    )
 }
 
 fun main() = application {
@@ -379,5 +385,7 @@ fun main() = application {
     ) {
         val driver = MongoDriver()
         App(driver, ::exitApplication)
+
+
     }
 }

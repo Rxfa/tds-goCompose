@@ -34,11 +34,11 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
 
     var lastPlayed: Int?=null
 
-    val captures: Pair<Int,Int>?= (match as? RunningMatch)?.game?.getCaptures()
+    val captures: Pair<Int,Int>?= game?.getCaptures()
 
     val isOver:Boolean get()=game?.stateOfGame()==true
 
-    val score: Pair<Double,Double>?=  (match as? RunningMatch)?.game?.score()
+    val score: Pair<Double,Double>?=  game?.score()
 
     val me: Player? get() = (match as? RunningMatch)?.me
 
