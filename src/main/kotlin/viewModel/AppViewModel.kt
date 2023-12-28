@@ -131,7 +131,7 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
         if (turnAvailable) return
         waitingJob = scope.launch(Dispatchers.IO) {
             do {
-                delay(3000)
+                delay(300)
                 try { match = (match as RunningMatch).refresh() }
                 catch (e: NoChangesException) { /* Ignore */ }
                 catch (e: Exception) {

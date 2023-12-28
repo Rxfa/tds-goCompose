@@ -315,7 +315,6 @@ fun boardCells(board: Board?, onClick: (String) -> Unit, paddingStart: Dp, paddi
                                 .offset(x = -GRID_THICKNESS, y = -GRID_THICKNESS)
                                 .border(GRID_THICKNESS, color = Color.Black)
                     Box(modifier = modifier) {
-                        val scope= rememberCoroutineScope()
                         val position = "${'A' + row}${BOARD_SIZE - col}"
                         cell(state = board?.get(position), size = CELL_SIZE.dp, onClick ={onClick(position)})
                     }
@@ -359,9 +358,9 @@ fun cell(state: State?, size: Dp = 100.dp, onClick:() -> Unit={} ){
 
  */
 @Composable
-fun cell(state: State?, size: Dp = CELL_SIZE.dp, onClick: () -> Unit, onGrid: Boolean = true,position:String?=null){
+fun cell(state: State?, size: Dp = CELL_SIZE.dp, onClick: () -> Unit, onGrid: Boolean = true){
     val modifier = if(onGrid) Modifier.size(size).offset(x = -size/2, y = -size/2) else Modifier.size(size)
-    if(state==null || state == State.FREE ){
+    if(state==null || state == State.FREE){
         Box(modifier = modifier.clickable(onClick = onClick))
     }else {
         val filename = when (state) {
