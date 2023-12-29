@@ -331,7 +331,7 @@ fun boardCells(board: Board?, onClick: (String) -> Unit, paddingStart: Dp, paddi
                                 .border(GRID_THICKNESS, color = Color.Black)
                     Box(modifier = modifier) {
                         val position = "${'A' + row}${BOARD_SIZE - col}"
-                        cell(state = board?.get(position), size = CELL_SIZE.dp, onClick ={onClick(position)}, gamevalid =gamevalid )
+                        cell(state = board?.get(position), size = CELL_SIZE.dp, onClick ={onClick(position)},onGrid = true, gamevalid =gamevalid )
                     }
                 }
             }
