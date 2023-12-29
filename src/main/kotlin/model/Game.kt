@@ -10,7 +10,7 @@ import kotlin.system.exitProcess
 @Serializable
 data class Game(
     val board: Board = Board(),
-    private val captures: Captures = Captures()
+    val captures: Captures = Captures()
     ){
 
     private val isOver = board.pass.all()
@@ -45,10 +45,6 @@ data class Game(
         return isOver
     }
 
-    fun getCaptures(): Captures{
-        return captures
-    }
-
     fun move(move: String): Game {
         require(!isOver){"Game over"}
         val (board, c) = board.play(move)
@@ -62,7 +58,7 @@ data class Game(
             return Score(black = value.first, white = value.second)
         }
 
-    fun pass()=copy(board=board.pass())
+    fun pass() = copy(board=board.pass())
 
     private suspend fun saveBoard(name:String) =
         JsonFileStorage<String, Game>("games/", GameSerializer).create(name, this).also {

@@ -7,7 +7,6 @@ class RunningMatch(
     val game: Game,
 ): Match(gs) {
 
-
     suspend fun play(move: String): Match {
         check(game.isMyTurn(me)){ "It's not your turn" }
         val updatedGame = game.move(move)

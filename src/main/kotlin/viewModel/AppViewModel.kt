@@ -28,21 +28,27 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
 
     var viewLastPlayed by mutableStateOf(false)
 
-    val game: Game? get() = (match as? RunningMatch)?.game
+    val game: Game?
+        get() = (match as? RunningMatch)?.game
 
-    val board:Board? get()=game?.board
+    val me: Player?
+        get() = (match as? RunningMatch)?.me
 
-    var lastPlayed: Int?=null
+    val board:Board?
+        get()=game?.board
 
-    val captures: Captures?= game?.getCaptures()
+    var lastPlayed: Int? = null
 
-    val isOver:Boolean get()=game?.stateOfGame()==true
+    val captures: Captures?
+        get() = game?.captures
 
-    val score: Score?=  game?.score
+    val isOver:Boolean
+        get() = game?.stateOfGame()==true
 
-    val me: Player? get() = (match as? RunningMatch)?.me
+    val score: Score ?=  game?.score
 
-    val isRunning: Boolean get() = match is RunningMatch
+    val isRunning: Boolean
+        get() = match is RunningMatch
 
     private var waitingJob by mutableStateOf<Job?>(null)
 
