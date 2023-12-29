@@ -215,18 +215,18 @@ fun background(vm: AppViewModel,onClick: (String) -> Unit){
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(modifier = Modifier.height(CELL_LABEL))
-            BoardOverview(vm.board, onClick = onClick,vm.game==null)
+            BoardOverview(vm.board, onClick = onClick,vm.game==null,vm.game?.stateOfGame()==true)
             StatusBar(vm.game, vm.me)
         }
     }
 }
 @Composable
-fun BoardOverview(board: Board?,onClick: (String) -> Unit,gamevalid: Boolean){
+fun BoardOverview(board: Board?,onClick: (String) -> Unit,gamevalid: Boolean,gameIsFinished:Boolean){
     Column {
         letters()
         Row {
             numbers()
-            BoardView(board, onClick,gamevalid)
+            BoardView(board, onClick,gamevalid,gameIsFinished)
         }
     }
 }
@@ -305,18 +305,18 @@ fun numbers(){
 
 
 @Composable
-fun BoardView(board: Board?, onClick: (String)->Unit,gamevalid: Boolean){
+fun BoardView(board: Board?, onClick: (String)->Unit,gamevalid: Boolean,gameIsFinished:Boolean){
     val paddingStart = CELL_LABEL * 2
     val paddingTop = paddingStart
     Box{
         boardWrapper(paddingStart = paddingStart, paddingTop = paddingTop)
-        boardCells(board = board, onClick = onClick, paddingStart = paddingStart, paddingTop = paddingTop, gamevalid =gamevalid )
+        boardCells(board = board, onClick = onClick, paddingStart = paddingStart, paddingTop = paddingTop, gamevalid =gamevalid, gameIsFinished = gameIsFinished )
     }
 }
 
 
 @Composable
-fun boardCells(board: Board?, onClick: (String) -> Unit, paddingStart: Dp, paddingTop: Dp,gamevalid: Boolean){
+fun boardCells(board: Board?, onClick: (String) -> Unit, paddingStart: Dp, paddingTop: Dp,gamevalid: Boolean,gameIsFinished:Boolean){
     Column(modifier = Modifier.padding(start = paddingStart, paddingTop)) {
         repeat(BOARD_SIZE) { row ->
             Row {
@@ -331,7 +331,7 @@ fun boardCells(board: Board?, onClick: (String) -> Unit, paddingStart: Dp, paddi
                                 .border(GRID_THICKNESS, color = Color.Black)
                     Box(modifier = modifier) {
                         val position = "${'A' + row}${BOARD_SIZE - col}"
-                        cell(state = board?.get(position), size = CELL_SIZE.dp, onClick ={onClick(position)},onGrid = true, gamevalid =gamevalid )
+                        cell(state = board?.get(position), size = CELL_SIZE.dp, onClick ={onClick(position)},onGrid = true, gamevalid =gamevalid, gameIsFinished = gameIsFinished )
                     }
                 }
             }
@@ -351,31 +351,10 @@ fun boardWrapper(paddingStart: Dp, paddingTop: Dp){
 
 
 
-
-/*
 @Composable
-fun cell(state: State?, size: Dp = 100.dp, onClick:() -> Unit={} ){
-    val modifier=Modifier.size(size)
-        if(state==null) return
-
-        val filename = when (state){
-            State.WHITE -> "white.png"
-            State.BLACK -> "black.png"
-            else -> return
-        }
-        Image(
-            painter = painterResource(filename),
-            contentDescription = "player $state",
-            modifier = modifier
-        )
-
-}
-
- */
-@Composable
-fun cell(state: State?, size: Dp = CELL_SIZE.dp, onClick: () -> Unit, onGrid: Boolean = false,gamevalid:Boolean=false){
+fun cell(state: State?, size: Dp = CELL_SIZE.dp, onClick: () -> Unit, onGrid: Boolean = false,gamevalid:Boolean=false,gameIsFinished:Boolean=false){
     val modifier = if(onGrid) Modifier.size(size).offset(x = -size/2, y = -size/2) else Modifier.size(size)
-    if(gamevalid) Box(modifier = modifier)
+    if(gamevalid  ||(gameIsFinished&& state==State.FREE)) Box(modifier = modifier)
     else if(state==null || state == State.FREE){
         Box(modifier = modifier.clickable(onClick = onClick))
     }else {
