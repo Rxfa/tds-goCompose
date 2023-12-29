@@ -82,7 +82,7 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
         inputName = null
     }
 
-    fun showLastPlayed(){
+    fun toggleLastPlayed(){
         if(viewLastPlayed)viewLastPlayed=false
         else viewLastPlayed=true
     }

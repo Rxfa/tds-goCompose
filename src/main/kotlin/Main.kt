@@ -50,7 +50,9 @@ fun FrameWindowScope.App(driver: MongoDriver, exitFunction: () -> Unit) {
             Item("Show Final Score", enabled = vm.isOver,onClick = vm::showScore)
         }
         Menu("Options"){
-            Item("Show Last Played", onClick = vm::showLastPlayed)
+            CheckboxItem("Show Last Played", checked = vm.viewLastPlayed, onCheckedChange ={
+                scope.launch { vm.toggleLastPlayed() }
+            })
         }
     }
     MaterialTheme{
@@ -378,9 +380,10 @@ fun cell(state: State?, size: Dp = CELL_SIZE.dp, onClick: () -> Unit, onGrid: Bo
 
 fun main() = application {
     Window(
-        onCloseRequest = { exitApplication() },
+        onCloseRequest = {  },
         title = "Go Game",
-        state = rememberWindowState(width = WIN_WIDTH.dp, height = WIN_HEIGHT.dp)
+        state = rememberWindowState(width = WIN_WIDTH.dp, height = WIN_HEIGHT.dp),
+        resizable = false,
     ) {
         val driver = MongoDriver()
         App(driver, ::exitApplication)
