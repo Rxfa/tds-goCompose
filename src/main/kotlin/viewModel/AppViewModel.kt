@@ -28,6 +28,7 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
 
     var viewLastPlayed by mutableStateOf(false)
 
+    val gameId:String? get() =(match as? RunningMatch)?.id
     val game: Game? get() = (match as? RunningMatch)?.game
 
     val board:Board? get()=game?.board
@@ -96,6 +97,10 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
         waitForOtherSide()
     }
 
+    suspend fun deleteGame(id:String?,player: Player?){
+        if(id!=null && player==Player.BLACK ) storage.delete(id)
+        else println("didnt delete")
+    }
     suspend fun passRound(){
         try{
             match=(match as RunningMatch).pass()

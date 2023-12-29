@@ -13,9 +13,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.window.*
-import model.Board
-import model.Game
-import model.Player
+import model.*
+import mongo.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import kotlinx.coroutines.CoroutineScope
@@ -36,9 +35,23 @@ fun FrameWindowScope.App(driver: MongoDriver, exitFunction: () -> Unit) {
 
     MenuBar {
         Menu("Game") {
-            Item("Start Game", onClick = vm::showNewGameDialog)
-            Item("Join Game", onClick = vm::showJoinGameDialog)
-            Item("Exit", onClick = {vm::exit; exitFunction()})
+            Item("Start Game", onClick = {
+                scope.launch {
+                    vm.showNewGameDialog()
+                    vm.deleteGame(vm.gameId, vm.me)
+                }
+            })
+            Item("Join Game", onClick = {
+                scope.launch {
+                    vm.showJoinGameDialog()
+                    vm.deleteGame(vm.gameId, vm.me)
+
+            }
+        })
+            Item("Exit", onClick = {
+                scope.launch{
+                    vm.deleteGame(vm.gameId,vm.me)
+                }; exitFunction()})
         }
         Menu("Play"){
             Item("Pass", enabled=vm.isRunning,onClick = {
@@ -387,6 +400,5 @@ fun main() = application {
     ) {
         val driver = MongoDriver()
         App(driver, ::exitApplication)
-
     }
 }
