@@ -5,7 +5,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import model.Game
 
-object GameSerializer: Serializer<Game> {
+object GameSerializer : Serializer<Game> {
     @OptIn(ExperimentalSerializationApi::class)
     private val json = Json {
         prettyPrint = true
