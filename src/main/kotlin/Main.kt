@@ -71,8 +71,7 @@ fun FrameWindowScope.App(driver: MongoDriver, exitFunction: () -> Unit) {
         background(vm) {
             position -> scope.launch { vm.play(position) }
         }
-        if (vm.viewScore)
-            ScoreDialog(vm.score, vm::hideScore)
+
         vm.inputName?.let {
             StartOrJoinDialog(
                 scope = scope,
@@ -81,6 +80,7 @@ fun FrameWindowScope.App(driver: MongoDriver, exitFunction: () -> Unit) {
                 onAction = if (it == AppViewModel.InputName.NEW) vm::newGame else vm::joinGame
             )
         }
+        if (vm.viewScore) ScoreDialog(vm.score, vm::hideScore)
         if (vm.viewCaptures) CapturesDialog(vm.captures, vm::hideCaptures)
         if (vm.viewLastPlayed) scope.launch { vm.refreshGame() }
         if (vm.isWaiting) waitingIndicator()
@@ -127,10 +127,10 @@ fun ScoreDialog(score: Score?, closeDialog: () -> Unit) {
                     Player.entries.forEach { player ->
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             cell(state = player.state, size = SMALL_CELL_SIZE)
-                            Text(text = " - ${score?.white}", style = MaterialTheme.typography.h4)
+                            if(player.state==State.WHITE)Text(text = " - ${score?.white}", style = MaterialTheme.typography.h4)
+                            else Text(text = " - ${score?.black}", style = MaterialTheme.typography.h4)
                         }
                     }
-                    Text(text = "Draws - ${score?.white}", style = MaterialTheme.typography.h4)
                 }
             }
         }
