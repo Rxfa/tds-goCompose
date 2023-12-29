@@ -4,9 +4,9 @@ package viewModel
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import mongo.MongoDriver
 import kotlinx.coroutines.*
 import model.*
+import mongo.MongoDriver
 import storage.GameSerializer
 import storage.MongoStorage
 
@@ -34,11 +34,11 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
 
     var lastPlayed: Int?=null
 
-    val captures: Pair<Int,Int>?= game?.getCaptures()
+    val captures: Captures?= game?.getCaptures()
 
     val isOver:Boolean get()=game?.stateOfGame()==true
 
-    val score: Pair<Double,Double>?=  game?.score()
+    val score: Score?=  game?.score
 
     val me: Player? get() = (match as? RunningMatch)?.me
 
@@ -70,10 +70,13 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
         waitForOtherSide()
     }
 
-    enum class InputName(val txt: String)
-    { NEW("Start"), JOIN("Join") }
+    enum class InputName(val txt: String) {
+        NEW("Start"), JOIN("Join")
+    }
 
-    fun cancelInput() { inputName = null }
+    fun cancelInput() {
+        inputName = null
+    }
     suspend fun newGame(gameName: String) {
 
         cancelWaiting()
@@ -83,8 +86,7 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
     }
 
     fun showLastPlayed(){
-        if(viewLastPlayed)viewLastPlayed=false
-        else viewLastPlayed=true
+        viewLastPlayed = !viewLastPlayed
     }
 
     suspend fun joinGame(gameName: String) {

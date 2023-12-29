@@ -7,25 +7,20 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.DpSize
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.window.*
-import model.Board
-import model.Game
-import model.Player
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import model.Cell
+import model.*
 import model.State
+import mongo.MongoDriver
 import viewModel.AppViewModel
 import kotlin.reflect.KSuspendFunction1
-import mongo.MongoDriver
-
 
 
 @Composable
@@ -91,7 +86,7 @@ fun drawSquare(modifier: Modifier,position: Int, backgroundColor:Color,borderCol
     )
 }
 @Composable
-fun CapturesDialog(captures: Pair<Int, Int>?,closeDialog: () -> Unit){
+fun CapturesDialog(captures: Captures?, closeDialog: () -> Unit){
     AlertDialog(
         title={Text(text="Captures in a", style= MaterialTheme.typography.h4)},
         onDismissRequest = closeDialog,
@@ -105,14 +100,14 @@ fun CapturesDialog(captures: Pair<Int, Int>?,closeDialog: () -> Unit){
                     Row(verticalAlignment = Alignment.CenterVertically){
                         cell(Player.BLACK.state,size = 30.dp,{})
                         Text(
-                            text= " - ${captures?.first}",
+                            text= " - ${captures?.black}",
                             style = MaterialTheme.typography.h4
                         )
                     }
                     Row(verticalAlignment = Alignment.CenterVertically){
                         cell(Player.WHITE.state,size = 30.dp,{})
                         Text(
-                            text= " - ${captures?.second}",
+                            text= " - ${captures?.white}",
                             style = MaterialTheme.typography.h4
                         )
                     }
@@ -131,7 +126,7 @@ fun waitingIndicator()= CircularProgressIndicator(
 )
 
 @Composable
-fun ScoreDialog(score: Pair<Double, Double>?, closeDialog:()-> Unit){
+fun ScoreDialog(score: Score?, closeDialog:()-> Unit){
     AlertDialog(
         title={Text(text="Scores in a", style= MaterialTheme.typography.h4)},
         onDismissRequest = closeDialog,
@@ -145,13 +140,13 @@ fun ScoreDialog(score: Pair<Double, Double>?, closeDialog:()-> Unit){
                     Row(verticalAlignment = Alignment.CenterVertically){
                         cell(player.state,size = 30.dp,{})
                         Text(
-                            text= " - ${score?.second}",
+                            text= " - ${score?.white}",
                             style = MaterialTheme.typography.h4
                         )
                     }
                 }
                 Text(
-                    text = "Draws - ${score?.second}",
+                    text = "Draws - ${score?.white}",
                     style = MaterialTheme.typography.h4
                 )
             }

@@ -1,14 +1,13 @@
 package model
 
 import BOARD_SIZE
-import kotlinx.serialization.*
-import or
+import kotlinx.serialization.Serializable
 
 @Serializable
 data class Board(
     val board: List<Cell> = List(BOARD_SIZE * BOARD_SIZE){ Cell(it) },
     private val turn: Int = 1,
-    val pass: Pair<Boolean, Boolean> = false to false,
+    val pass: Pass = Pass(),
     private val prevBoard: List<Cell> = board,
 ) {
 
@@ -180,7 +179,7 @@ data class Board(
         copy(
             board=if(isCapture) capture(move, cellsToCapture) else switch(move),
             turn=turn + 1,
-            pass=false to false,
+            pass=Pass(),
             prevBoard=board
         )
 

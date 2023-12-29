@@ -1,8 +1,10 @@
 import model.Board
+import model.Captures
 import model.Game
 
-val blackScore get() =
-    when(BOARD_SIZE){
+@Suppress("KotlinConstantConditions")
+val blackScore: Double
+    get() = when(BOARD_SIZE){
         9 -> -3.5
         13 -> -4.5
         19 -> -5.5
@@ -23,9 +25,12 @@ fun Game.seriesOfMoves(moves: List<String>): Game {
     return game
 }
 
-infix fun Pair<Boolean, Boolean>.or(other: Pair<Boolean, Boolean>) = (first || other.first) to (second || other.second)
+operator fun <T: Number> Pair<Double, Double>.plus(other: Pair<T, T>): Pair<Double, Double> =
+    when(other.first){
+        is Double -> (first + other.first as Double) to (second + other.second as Double)
+        is Int -> (first + other.first as Int) to (second + other.second as Int)
+        else -> throw IllegalArgumentException("Only run with Integers and Doubles")
+    }
 
-infix fun Pair<Int, Int>.plus(other:Pair<Int,Int>) = (first + other.first) to (second + other.second)
-
-infix fun Pair<Double, Double>.plusDouble(other: Pair<Int, Int>) = (first + other.first) to (second + other.second)
+operator fun Pair<Double, Double>.plus(other: Captures): Pair<Double, Double> = (first + other.black) to (second + other.white)
 

@@ -3,7 +3,6 @@ package model
 import blackScore
 import kotlinx.serialization.Serializable
 import plus
-import plusDouble
 import storage.GameSerializer
 import storage.JsonFileStorage
 import kotlin.system.exitProcess
@@ -11,10 +10,10 @@ import kotlin.system.exitProcess
 @Serializable
 data class Game(
     val board: Board = Board(),
-    private val captures: Pair<Int, Int> = 0 to 0
+    private val captures: Captures = Captures()
     ){
 
-    private val isOver = board.pass == true to true
+    private val isOver = board.pass.all()
 
     internal fun IamOwner(player: Player) = player == Player.WHITE
 
@@ -35,8 +34,7 @@ data class Game(
     }
 
     fun winner():Player{
-        val score=score()
-        return if(score.first>score.second) Player.BLACK
+        return if(score.black > score.white) Player.BLACK
         else Player.WHITE
     }
 
@@ -47,7 +45,7 @@ data class Game(
         return isOver
     }
 
-    fun getCaptures():Pair<Int,Int>{
+    fun getCaptures(): Captures{
         return captures
     }
 
@@ -55,10 +53,14 @@ data class Game(
         require(!isOver){"Game over"}
         val (board, c) = board.play(move)
         val pair = if(board.player == Player.WHITE) (c to 0) else (0 to c)
-        return copy(board = board, captures = (captures plus pair))
+        return copy(board = board, captures = (captures + pair))
     }
 
-    fun score()=(blackScore to 0.0) plusDouble  board.countTerritory() plusDouble  captures
+    val score: Score
+        get() {
+            val value = (blackScore to 0.0) +  board.countTerritory() +  captures
+            return Score(black = value.first, white = value.second)
+        }
 
     fun pass()=copy(board=board.pass())
 
@@ -72,15 +74,14 @@ data class Game(
 
 
     fun show(){
-        val results=score()
         val turn = "Turn: ${board.player.state.value} (${board.player.name})"
-        val captures = "Captures: ${State.BLACK.value}=${captures.first} - ${State.WHITE.value}=${captures.second}"
-        val score = "Score: ${State.BLACK.value}=${results.first} - ${State.WHITE.value}=${results.second}"
+        val captures = "Captures: ${State.BLACK.value}=${captures.black} - ${State.WHITE.value}=${captures.white}"
+        val score = "Score: ${State.BLACK.value}=${score.black} - ${State.WHITE.value}=${score.white}"
         println(board.show())
-        return when(board.pass){
-            true to true -> println("GAME OVER     $score")
-            false to false -> println("$turn    $captures")
-            else -> println("Player ${board.player.other.state} passes.   $turn")
+        return when{
+            board.pass.all() -> println("GAME OVER\t\t$score")
+            board.pass.none() -> println("$turn\t$captures")
+            else -> println("Player ${board.player.other.state} passes.\t$turn")
         }
     }
 }
