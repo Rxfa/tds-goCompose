@@ -13,7 +13,7 @@ import storage.MongoStorage
 class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
 
     private val storage = MongoStorage<String, Game>("games", driver, GameSerializer)
-    private var match by mutableStateOf( Match(storage))
+    private var match by mutableStateOf(Match(storage))
 
     //    var game by mutableStateOf(Game())
     var viewScore by mutableStateOf(false)
@@ -34,19 +34,20 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
     val me: Player?
         get() = (match as? RunningMatch)?.me
 
-    val board:Board?
-        get()=game?.board
+    val board: Board?
+        get() = game?.board
 
-    var lastPlayed: Int? = null
+    val lastPlayed: String?
+        get() = game?.lastPlay
 
     val captures: Captures?
         get() = game?.captures
 
-    val score: Score ?
-        get() =  game?.score
+    val score: Score?
+        get() = game?.score
 
-    val isOver:Boolean
-        get() = game?.stateOfGame()==true
+    val isOver: Boolean
+        get() = game?.stateOfGame() == true
 
     val isRunning: Boolean
         get() = match is RunningMatch
@@ -59,18 +60,29 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
         get() = (match as RunningMatch).isMyTurn()
 
 
-    fun showScore(){ viewScore = true}
-    fun hideScore(){ viewScore = false}
+    fun showScore() {
+        viewScore = true
+    }
 
-    fun showCaptures(){viewCaptures=true}
+    fun hideScore() {
+        viewScore = false
+    }
 
-    fun hideCaptures(){viewCaptures=false}
-    fun hideError() { errorMessage = null }
+    fun showCaptures() {
+        viewCaptures = true
+    }
 
-    suspend fun play(pos: String){
+    fun hideCaptures() {
+        viewCaptures = false
+    }
+
+    fun hideError() {
+        errorMessage = null
+    }
+
+    suspend fun play(pos: String) {
         try {
             match = (match as RunningMatch).play(pos)
-            lastPlayed=(match as RunningMatch).game.board.toPosition(pos)
         } catch (e: Exception) {
             errorMessage = e.message
         }
@@ -84,6 +96,7 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
     fun cancelInput() {
         inputName = null
     }
+
     suspend fun newGame(gameName: String) {
 
         cancelWaiting()
@@ -92,7 +105,7 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
         inputName = null
     }
 
-    fun showLastPlayed(){
+    fun showLastPlayed() {
         viewLastPlayed = !viewLastPlayed
     }
 
@@ -105,10 +118,9 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
         waitForOtherSide()
     }
 
-    suspend fun passRound(){
-        try{
-            match=(match as RunningMatch).pass()
-            lastPlayed=null
+    suspend fun passRound() {
+        try {
+            match = (match as RunningMatch).pass()
         } catch (e: Exception) {
             errorMessage = e.message
         }
@@ -123,8 +135,13 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
         }
     }
 
-    fun showNewGameDialog() { inputName = InputName.NEW }
-    fun showJoinGameDialog() { inputName = InputName.JOIN }
+    fun showNewGameDialog() {
+        inputName = InputName.NEW
+    }
+
+    fun showJoinGameDialog() {
+        inputName = InputName.JOIN
+    }
 
     suspend fun exit() {
         (match as RunningMatch).delete()
@@ -140,12 +157,13 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
         if (turnAvailable) return
         waitingJob = scope.launch(Dispatchers.IO) {
             do {
-                delay(3000)
-                try { match = (match as RunningMatch).refresh() }
-                catch (e: NoChangesException) { /* Ignore */ }
-                catch (e: Exception) {
+                delay(500)
+                try {
+                    match = (match as RunningMatch).refresh()
+                } catch (e: NoChangesException) { /* Ignore */
+                } catch (e: Exception) {
                     errorMessage = e.message
-                    if (e is GameDeletedException) match =Match(storage)
+                    if (e is GameDeletedException) match = Match(storage)
                 }
             } while (!turnAvailable)
             waitingJob = null

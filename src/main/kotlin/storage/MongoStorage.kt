@@ -7,7 +7,7 @@ class MongoStorage<Key, Data>(
     collectionName: String,
     driver: MongoDriver,
     private val serializer: Serializer<Data>
-): Storage<Key, Data> {
+) : Storage<Key, Data> {
     data class Doc(val _id: String, val data: String)
 
     val docs = driver.getCollection<Doc>(collectionName)
@@ -27,13 +27,13 @@ class MongoStorage<Key, Data>(
     }
 
     override suspend fun update(key: Key, data: Data) {
-        check(docs.replaceDocument(key.toString(), Doc(key, data))){
+        check(docs.replaceDocument(key.toString(), Doc(key, data))) {
             "Document $key does not exist to update"
         }
     }
 
     override suspend fun delete(key: Key) {
-        check(docs.deleteDocument(key.toString())){
+        check(docs.deleteDocument(key.toString())) {
             "Document $key does not exist to delete"
         }
     }

@@ -1,6 +1,6 @@
 package model
 
-open class Match(val gs: GameStorage){
+open class Match(val gs: GameStorage) {
 
     suspend fun create(id: String): RunningMatch {
         val game = Game()

@@ -5,17 +5,18 @@ class RunningMatch(
     private val id: String,
     val me: Player,
     val game: Game,
-): Match(gs) {
+) : Match(gs) {
 
     suspend fun play(move: String): Match {
-        check(game.isMyTurn(me)){ "It's not your turn" }
+        check(game.isMyTurn(me)) { "It's not your turn" }
         val updatedGame = game.move(move)
         gs.update(id, updatedGame)
+        // TODO: Try illegal moves and see how it affects lastPlayed.
         return RunningMatch(gs, id, me, updatedGame)
     }
 
-    suspend fun pass():Match{
-        check(game.isMyTurn(me)){ "It's not your turn" }
+    suspend fun pass(): Match {
+        check(game.isMyTurn(me)) { "It's not your turn" }
         val updatedGame = game.pass()
         gs.update(id, updatedGame)
         return RunningMatch(gs, id, me, updatedGame)
@@ -24,17 +25,17 @@ class RunningMatch(
     suspend fun refresh(): RunningMatch {
         val updatedGame = gs.slowRead(id) ?: throw GameDeletedException()
 
-        if(game == updatedGame)
+        if (game == updatedGame)
             throw NoChangesException()
-        return RunningMatch(gs, id , me, updatedGame)
+        return RunningMatch(gs, id, me, updatedGame)
     }
 
-    suspend fun delete(){
-        if(game.IamOwner(me))
+    suspend fun delete() {
+        if (game.IamOwner(me))
             gs.delete(id)
     }
 
-    fun isOver():Boolean{
+    fun isOver(): Boolean {
         return game.stateOfGame()
     }
 

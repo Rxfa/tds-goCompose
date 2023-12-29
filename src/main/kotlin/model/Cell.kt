@@ -7,10 +7,10 @@ import kotlinx.serialization.Serializable
 data class Cell(
     val id: Int,
     val state: State = State.FREE,
-){
+) {
 
     override fun equals(other: Any?): Boolean =
-        if(other is Cell)
+        if (other is Cell)
             id == other.id
         else
             false

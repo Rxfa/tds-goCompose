@@ -2,14 +2,15 @@
 package storage
 
 import kotlin.io.path.*
+
 class JsonFileStorage<Key, Data>(
     private val baseDirectory: String,
     private val serializer: Serializer<Data>
-): Storage<Key, Data> {
-    init{
-        with(Path(baseDirectory)){
-            if(!exists()) createDirectory()
-            else check(isDirectory()){"$name is not a directory"}
+) : Storage<Key, Data> {
+    init {
+        with(Path(baseDirectory)) {
+            if (!exists()) createDirectory()
+            else check(isDirectory()) { "$name is not a directory" }
         }
     }
 
@@ -23,7 +24,7 @@ class JsonFileStorage<Key, Data>(
 
     override suspend fun read(key: Key) =
         path(key).let {
-            check(it.exists()){ "File $key does not exist"}
+            check(it.exists()) { "File $key does not exist" }
             serializer.deserialize(it.readText())
         }
 
@@ -33,6 +34,6 @@ class JsonFileStorage<Key, Data>(
             it.writeText(serializer.serialize(data))
         }
 
-    override suspend fun delete(key: Key)  = check(path(key).deleteIfExists()) { "File $key does not exist" }
+    override suspend fun delete(key: Key) = check(path(key).deleteIfExists()) { "File $key does not exist" }
 
 }
