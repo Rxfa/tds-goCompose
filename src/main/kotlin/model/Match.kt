@@ -73,7 +73,7 @@ suspend fun GameStorage.slowRead(key: String): Game? {
     log("slowRead1")
     val res = withContext(Dispatchers.IO){
         log("slowRead2")
-        Thread.sleep(5_000)
+        Thread.sleep(2_00)
         log("SlowRead3")
         read(key)
     }

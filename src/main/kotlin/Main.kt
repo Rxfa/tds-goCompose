@@ -13,9 +13,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.window.*
-import model.Board
-import model.Game
-import model.Player
+import model.*
+import mongo.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import kotlinx.coroutines.CoroutineScope
@@ -36,9 +35,23 @@ fun FrameWindowScope.App(driver: MongoDriver, exitFunction: () -> Unit) {
 
     MenuBar {
         Menu("Game") {
-            Item("Start Game", onClick = vm::showNewGameDialog)
-            Item("Join Game", onClick = vm::showJoinGameDialog)
-            Item("Exit", onClick = {vm::exit; exitFunction()})
+            Item("Start Game", onClick = {
+                scope.launch {
+                    vm.showNewGameDialog()
+                    vm.deleteGame(vm.gameId, vm.me)
+                }
+            })
+            Item("Join Game", onClick = {
+                scope.launch {
+                    vm.showJoinGameDialog()
+                    vm.deleteGame(vm.gameId, vm.me)
+
+            }
+        })
+            Item("Exit", onClick = {
+                scope.launch{
+                    vm.deleteGame(vm.gameId,vm.me)
+                }; exitFunction()})
         }
         Menu("Play"){
             Item("Pass", enabled=vm.isRunning,onClick = {
@@ -50,7 +63,9 @@ fun FrameWindowScope.App(driver: MongoDriver, exitFunction: () -> Unit) {
             Item("Show Final Score", enabled = vm.isOver,onClick = vm::showScore)
         }
         Menu("Options"){
-            Item("Show Last Played", onClick = vm::showLastPlayed)
+            CheckboxItem("Show Last Played", checked = vm.viewLastPlayed, onCheckedChange ={
+                scope.launch { vm.toggleLastPlayed() }
+            })
         }
     }
     MaterialTheme{
@@ -78,7 +93,7 @@ fun FrameWindowScope.App(driver: MongoDriver, exitFunction: () -> Unit) {
 fun ShowLastPlayed(lastPlayed: Int?, closeDialog: () -> Unit,viewLastPlayed:Boolean) {
     val backgroundColor= Color.Transparent
     if(lastPlayed!=null && viewLastPlayed) {
-        drawSquare(modifier = Modifier.size(CELL_SIDE), lastPlayed, backgroundColor, Color.Red, CELL_SIDE)
+        drawSquare(modifier = Modifier.size(CELL_SIZE.dp), lastPlayed, backgroundColor, Color.Red, CELL_SIZE.dp)
     }
     else{
         closeDialog
@@ -200,18 +215,18 @@ fun background(vm: AppViewModel,onClick: (String) -> Unit){
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(modifier = Modifier.height(CELL_LABEL))
-            BoardOverview(vm.board, onClick = onClick)
+            BoardOverview(vm.board, onClick = onClick,vm.game==null)
             StatusBar(vm.game, vm.me)
         }
     }
 }
 @Composable
-fun BoardOverview(board: Board?,onClick: (String) -> Unit){
+fun BoardOverview(board: Board?,onClick: (String) -> Unit,gamevalid: Boolean){
     Column {
         letters()
         Row {
             numbers()
-            BoardView(board, onClick = onClick)
+            BoardView(board, onClick,gamevalid)
         }
     }
 }
@@ -290,18 +305,18 @@ fun numbers(){
 
 
 @Composable
-fun BoardView(board: Board?, onClick: (String)->Unit){
+fun BoardView(board: Board?, onClick: (String)->Unit,gamevalid: Boolean){
     val paddingStart = CELL_LABEL * 2
     val paddingTop = paddingStart
     Box{
         boardWrapper(paddingStart = paddingStart, paddingTop = paddingTop)
-        boardCells(board = board, onClick = onClick, paddingStart = paddingStart, paddingTop = paddingTop)
+        boardCells(board = board, onClick = onClick, paddingStart = paddingStart, paddingTop = paddingTop, gamevalid =gamevalid )
     }
 }
 
 
 @Composable
-fun boardCells(board: Board?, onClick: (String) -> Unit, paddingStart: Dp, paddingTop: Dp){
+fun boardCells(board: Board?, onClick: (String) -> Unit, paddingStart: Dp, paddingTop: Dp,gamevalid: Boolean){
     Column(modifier = Modifier.padding(start = paddingStart, paddingTop)) {
         repeat(BOARD_SIZE) { row ->
             Row {
@@ -315,9 +330,8 @@ fun boardCells(board: Board?, onClick: (String) -> Unit, paddingStart: Dp, paddi
                                 .offset(x = -GRID_THICKNESS, y = -GRID_THICKNESS)
                                 .border(GRID_THICKNESS, color = Color.Black)
                     Box(modifier = modifier) {
-                        val scope= rememberCoroutineScope()
                         val position = "${'A' + row}${BOARD_SIZE - col}"
-                        cell(state = board?.get(position), size = CELL_SIZE.dp, onClick ={onClick(position)})
+                        cell(state = board?.get(position), size = CELL_SIZE.dp, onClick ={onClick(position)},onGrid = true, gamevalid =gamevalid )
                     }
                 }
             }
@@ -359,9 +373,10 @@ fun cell(state: State?, size: Dp = 100.dp, onClick:() -> Unit={} ){
 
  */
 @Composable
-fun cell(state: State?, size: Dp = CELL_SIZE.dp, onClick: () -> Unit, onGrid: Boolean = true,position:String?=null){
+fun cell(state: State?, size: Dp = CELL_SIZE.dp, onClick: () -> Unit, onGrid: Boolean = false,gamevalid:Boolean=false){
     val modifier = if(onGrid) Modifier.size(size).offset(x = -size/2, y = -size/2) else Modifier.size(size)
-    if(state==null || state == State.FREE ){
+    if(gamevalid) Box(modifier = modifier)
+    else if(state==null || state == State.FREE){
         Box(modifier = modifier.clickable(onClick = onClick))
     }else {
         val filename = when (state) {
@@ -379,12 +394,12 @@ fun cell(state: State?, size: Dp = CELL_SIZE.dp, onClick: () -> Unit, onGrid: Bo
 
 fun main() = application {
     Window(
-        onCloseRequest = { exitApplication() },
+        onCloseRequest = {  },
         title = "Go Game",
-        state = rememberWindowState(width = WIN_WIDTH.dp, height = WIN_HEIGHT.dp)
+        state = rememberWindowState(width = WIN_WIDTH.dp, height = WIN_HEIGHT.dp),
+        resizable = false,
     ) {
         val driver = MongoDriver()
         App(driver, ::exitApplication)
-
     }
 }
