@@ -51,6 +51,8 @@ data class Game(
         return captures
     }
 
+
+
     fun move(move: String): Game {
         require(!isOver){"Game over"}
         val (board, c) = board.play(move)

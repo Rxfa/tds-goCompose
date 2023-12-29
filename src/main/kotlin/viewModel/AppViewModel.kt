@@ -15,7 +15,7 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
     private val storage = MongoStorage<String, Game>("games", driver, GameSerializer)
     private var match by mutableStateOf( Match(storage))
 
-    //    var game by mutableStateOf(Game())
+    //var game by mutableStateOf(Game())
     var viewScore by mutableStateOf(false)
         private set
 
@@ -49,8 +49,8 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
 
     val isWaiting: Boolean get() = waitingJob != null
 
-    private val turnAvailable: Boolean
-        get() = (match as RunningMatch).isMyTurn()
+    private val turnAvailable: Boolean?
+        get() = (match as? RunningMatch)?.isMyTurn()
 
 
     fun showScore(){ viewScore = true}
@@ -76,11 +76,13 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
 
     fun cancelInput() { inputName = null }
     suspend fun newGame(gameName: String) {
-
-        cancelWaiting()
-
-        match = match.create(gameName)
-        inputName = null
+        try {
+            cancelWaiting()
+            match = match.create(gameName)
+            inputName = null
+        }catch (e:Exception){
+            println(e.message)
+        }
     }
 
     fun toggleLastPlayed(){
@@ -89,12 +91,16 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
     }
 
     suspend fun joinGame(gameName: String) {
-        cancelWaiting()
+        try {
+            cancelWaiting()
 
-        match = match.join(gameName)
-        inputName = null
+            match = match.join(gameName)
+            inputName = null
 
-        waitForOtherSide()
+            waitForOtherSide()
+        }catch (e:Exception){
+            println(e.message)
+        }
     }
 
     suspend fun deleteGame(id:String?,player: Player?){
@@ -133,19 +139,21 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
     }
 
     private fun waitForOtherSide() {
-        if (turnAvailable) return
-        waitingJob = scope.launch(Dispatchers.IO) {
-            do {
-                delay(300)
-                try { match = (match as RunningMatch).refresh() }
-                catch (e: NoChangesException) { /* Ignore */ }
-                catch (e: Exception) {
-                    errorMessage = e.message
-                    if (e is GameDeletedException) match =Match(storage)
-                }
-            } while (!turnAvailable)
-            waitingJob = null
+            if (turnAvailable==true) return
+            waitingJob = scope.launch(Dispatchers.IO) {
+                do {
+                    delay(300)
+                    try {
+                        match = (match as RunningMatch).refresh()
+                    } catch (e: NoChangesException) { /* Ignore */
+                    } catch (e: Exception) {
+                        errorMessage = e.message
+                        if (e is GameDeletedException) match = Match(storage)
+                    }
+                } while (turnAvailable==false && game?.stateOfGame()==false)
+                waitingJob = null
+            }
         }
-    }
+
 
 }
