@@ -15,7 +15,7 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
     private val storage = MongoStorage<String, Game>("games", driver, GameSerializer)
     private var match by mutableStateOf(Match(storage))
 
-    //    var game by mutableStateOf(Game())
+    //var game by mutableStateOf(Game())
     var viewScore by mutableStateOf(false)
         private set
 
@@ -30,6 +30,10 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
 
     val game: Game?
         get() = (match as? RunningMatch)?.game
+
+    val gameId:String? 
+       get() =(match as? RunningMatch)?.id
+
 
     val me: Player?
         get() = (match as? RunningMatch)?.me
@@ -56,8 +60,8 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
 
     val isWaiting: Boolean get() = waitingJob != null
 
-    private val turnAvailable: Boolean
-        get() = (match as RunningMatch).isMyTurn()
+    private val turnAvailable: Boolean?
+        get() = (match as? RunningMatch)?.isMyTurn()
 
 
     fun showScore() {
@@ -98,29 +102,42 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
     }
 
     suspend fun newGame(gameName: String) {
-
-        cancelWaiting()
-
-        match = match.create(gameName)
-        inputName = null
+        try {
+            cancelWaiting()
+            match = match.create(gameName)
+            inputName = null
+        }catch (e:Exception){
+            println(e.message)
+        }
     }
 
-    fun showLastPlayed() {
+    fun toggleLastPlayed() {
         viewLastPlayed = !viewLastPlayed
     }
 
     suspend fun joinGame(gameName: String) {
-        cancelWaiting()
+        try {
+            cancelWaiting()
 
-        match = match.join(gameName)
-        inputName = null
+            match = match.join(gameName)
+            inputName = null
 
-        waitForOtherSide()
+            waitForOtherSide()
+        }catch (e:Exception){
+            println(e.message)
+        }
     }
 
-    suspend fun passRound() {
-        try {
-            match = (match as RunningMatch).pass()
+    suspend fun deleteGame(id:String?,player: Player?){
+        if(id!=null && player==Player.BLACK ) storage.delete(id)
+        else println("didnt delete")
+    }
+    
+    suspend fun passRound(){
+        try{
+            match=(match as RunningMatch).pass()
+            lastPlayed=null
+
         } catch (e: Exception) {
             errorMessage = e.message
         }
@@ -154,20 +171,19 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
     }
 
     private fun waitForOtherSide() {
-        if (turnAvailable) return
-        waitingJob = scope.launch(Dispatchers.IO) {
-            do {
-                delay(500)
-                try {
-                    match = (match as RunningMatch).refresh()
-                } catch (e: NoChangesException) { /* Ignore */
-                } catch (e: Exception) {
-                    errorMessage = e.message
-                    if (e is GameDeletedException) match = Match(storage)
-                }
-            } while (!turnAvailable)
-            waitingJob = null
+            if (turnAvailable) return
+            waitingJob = scope.launch(Dispatchers.IO) {
+                do {
+                    delay(300)
+                    try {
+                        match = (match as RunningMatch).refresh()
+                    } catch (e: NoChangesException) { /* Ignore */
+                    } catch (e: Exception) {
+                        errorMessage = e.message
+                        if (e is GameDeletedException) match = Match(storage)
+                    }
+                } while (turnAvailable==false && game?.stateOfGame()==false)
+                waitingJob = null
+            }
         }
-    }
-
 }

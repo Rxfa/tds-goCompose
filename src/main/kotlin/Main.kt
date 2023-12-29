@@ -8,6 +8,10 @@ import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.window.*
+import model.*
+import mongo.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -31,9 +35,23 @@ fun FrameWindowScope.App(driver: MongoDriver, exitFunction: () -> Unit) {
 
     MenuBar {
         Menu("Game") {
-            Item("Start Game", onClick = vm::showNewGameDialog)
-            Item("Join Game", onClick = vm::showJoinGameDialog)
-            Item("Exit", onClick = { vm::exit; exitFunction() })
+            Item("Start Game", onClick = {
+                scope.launch {
+                    vm.showNewGameDialog()
+                    vm.deleteGame(vm.gameId, vm.me)
+                }
+            })
+            Item("Join Game", onClick = {
+                scope.launch {
+                    vm.showJoinGameDialog()
+                    vm.deleteGame(vm.gameId, vm.me)
+
+            }
+        })
+            Item("Exit", onClick = {
+                scope.launch{
+                    vm.deleteGame(vm.gameId,vm.me)
+                }; exitFunction()})
         }
         Menu("Play") {
             Item("Pass", enabled = vm.isRunning, onClick = {
@@ -42,8 +60,10 @@ fun FrameWindowScope.App(driver: MongoDriver, exitFunction: () -> Unit) {
             Item("Show Captures", enabled = !vm.isOver, onClick = vm::showCaptures)
             Item("Show Final Score", enabled = vm.isOver, onClick = vm::showScore)
         }
-        Menu("Options") {
-            Item("Show Last Played", onClick = vm::showLastPlayed)
+        Menu("Options"){
+            CheckboxItem("Show Last Played", checked = vm.viewLastPlayed, onCheckedChange ={
+                scope.launch { vm.toggleLastPlayed() }
+            })
         }
     }
     MaterialTheme {
@@ -149,19 +169,40 @@ fun background(vm: AppViewModel, onClick: (String) -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(modifier = Modifier.height(CELL_LABEL))
-            BoardOverview(vm.board, onClick = onClick, vm.lastPlayed, vm.viewLastPlayed)
+            BoardOverview(
+              board = vm.board, 
+              onClick = onClick, 
+              lastPlayed = vm.lastPlayed, 
+              viewLastPlayed = vm.viewLastPlayed,
+              gamevalid = vm.game == null,
+              gameIsFinished = vm.game?.stateOfGame() == true
+            )
             StatusBar(vm.game, vm.me)
         }
     }
 }
 
 @Composable
-fun BoardOverview(board: Board?, onClick: (String) -> Unit, lastPlayed: String?, viewLastPlayed: Boolean) {
+fun BoardOverview(
+  board: Board?,
+  onClick: (String) -> Unit, 
+  lastPlayed: String?, 
+  viewLastPlayed: Boolean, 
+  gamevalid: Boolean, 
+  gameIsFinished:Boolean
+){
     Column {
         letters()
         Row {
             numbers()
-            BoardView(board, onClick = onClick, lastPlayed, viewLastPlayed)
+            BoardView(
+              board = board, 
+              onClick = onClick, 
+              lastPlayed = lastPlayed, 
+              viewLastPlayed = viewLastPlayed, 
+              gamevalid = gamevalid, 
+              gameIsFinished = gameIsFinished
+            )
         }
     }
 }
@@ -225,7 +266,7 @@ fun numbers() {
 
 
 @Composable
-fun BoardView(board: Board?, onClick: (String) -> Unit, lastPlayed: String?, viewLastPlayed: Boolean) {
+fun BoardView(board: Board?, onClick: (String) -> Unit, lastPlayed: String?, viewLastPlayed: Boolean, gamevalid: Boolean,gameIsFinished:Boolean) {
     val paddingStart = CELL_LABEL * 2
     val paddingTop = paddingStart
     Box {
@@ -233,10 +274,12 @@ fun BoardView(board: Board?, onClick: (String) -> Unit, lastPlayed: String?, vie
         boardCells(
             board = board,
             onClick = onClick,
+            paddingStart = paddingStart,
+            paddingTop = paddingTop,
             lastPlayed = lastPlayed,
             viewLastPlayed = viewLastPlayed,
-            paddingStart = paddingStart,
-            paddingTop = paddingTop
+            gamevalid = gamevalid,
+            gameIsFinished = gameIsFinished
         )
     }
 }
@@ -249,7 +292,9 @@ fun boardCells(
     paddingStart: Dp,
     paddingTop: Dp,
     lastPlayed: String?,
-    viewLastPlayed: Boolean
+    viewLastPlayed: Boolean,
+    gamevalid: Boolean,
+    gameIsFinished: Boolean
 ) {
     Column(modifier = Modifier.padding(start = paddingStart, paddingTop)) {
         repeat(BOARD_SIZE) { row ->
@@ -271,7 +316,9 @@ fun boardCells(
                             onClick = { onClick(position) },
                             onGrid = true,
                             lastPlayed = lastPlayed,
-                            viewLastPlayed = viewLastPlayed
+                            viewLastPlayed = viewLastPlayed,
+                            gamevalid = gamevalid,
+                            gameIsFinished = gameIsFinished
                         )
                     }
                 }
@@ -299,7 +346,9 @@ fun cell(
     onClick: () -> Unit = {},
     onGrid: Boolean = false,
     lastPlayed: String? = null,
-    viewLastPlayed: Boolean = false
+    viewLastPlayed: Boolean = false,
+    gamevalid: Boolean = false,
+    gameIsFinished: Boolean = false
 ) {
     val modifier = when {
         onGrid &&
@@ -310,7 +359,7 @@ fun cell(
         onGrid -> Modifier.size(size).offset(x = -size / 2, y = -size / 2)
         else -> Modifier.size(size)
     }
-    if (state != State.WHITE && state != State.BLACK) {
+    if ((state != State.WHITE && state != State.BLACK) && !gameIsFinished && gamevalid) {
         Box(modifier = modifier.clickable(onClick = onClick))
     } else {
         val filename = when (state) {
@@ -324,9 +373,10 @@ fun cell(
 
 fun main() = application {
     Window(
-        onCloseRequest = { exitApplication() },
+        onCloseRequest = {  },
         title = "Go Game",
-        state = rememberWindowState(width = WIN_WIDTH.dp, height = WIN_HEIGHT.dp)
+        state = rememberWindowState(width = WIN_WIDTH.dp, height = WIN_HEIGHT.dp),
+        resizable = false,
     ) {
         val driver = MongoDriver()
         App(driver, ::exitApplication)
