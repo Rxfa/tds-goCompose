@@ -373,7 +373,7 @@ fun cell(state: State?, size: Dp = 100.dp, onClick:() -> Unit={} ){
 
  */
 @Composable
-fun cell(state: State?, size: Dp = CELL_SIZE.dp, onClick: () -> Unit, onGrid: Boolean = true,gamevalid:Boolean=true){
+fun cell(state: State?, size: Dp = CELL_SIZE.dp, onClick: () -> Unit, onGrid: Boolean = false,gamevalid:Boolean=false){
     val modifier = if(onGrid) Modifier.size(size).offset(x = -size/2, y = -size/2) else Modifier.size(size)
     if(gamevalid) Box(modifier = modifier)
     else if(state==null || state == State.FREE){
