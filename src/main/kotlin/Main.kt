@@ -18,6 +18,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.*
+import androidx.compose.ui.zIndex
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import model.*
@@ -70,8 +71,7 @@ fun FrameWindowScope.App(driver: MongoDriver, exitFunction: () -> Unit) {
         background(vm) {
             position -> scope.launch { vm.play(position) }
         }
-        if (vm.viewScore)
-            ScoreDialog(vm.score, vm::hideScore)
+
         vm.inputName?.let {
             StartOrJoinDialog(
                 scope = scope,
@@ -80,6 +80,7 @@ fun FrameWindowScope.App(driver: MongoDriver, exitFunction: () -> Unit) {
                 onAction = if (it == AppViewModel.InputName.NEW) vm::newGame else vm::joinGame
             )
         }
+        if (vm.viewScore) ScoreDialog(vm.score, vm::hideScore)
         if (vm.viewCaptures) CapturesDialog(vm.captures, vm::hideCaptures)
         if (vm.viewLastPlayed) scope.launch { vm.refreshGame() }
         if (vm.isWaiting) waitingIndicator()
@@ -126,10 +127,10 @@ fun ScoreDialog(score: Score?, closeDialog: () -> Unit) {
                     Player.entries.forEach { player ->
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             cell(state = player.state, size = SMALL_CELL_SIZE)
-                            Text(text = " - ${score?.white}", style = MaterialTheme.typography.h4)
+                            if(player.state==State.WHITE)Text(text = " - ${score?.white}", style = MaterialTheme.typography.h4)
+                            else Text(text = " - ${score?.black}", style = MaterialTheme.typography.h4)
                         }
                     }
-                    Text(text = "Draws - ${score?.white}", style = MaterialTheme.typography.h4)
                 }
             }
         }
@@ -308,7 +309,9 @@ fun boardCells(
                                 .size(CELL_SIZE.dp)
                                 .offset(x = -GRID_THICKNESS, y = -GRID_THICKNESS)
                                 .border(GRID_THICKNESS, color = GRID_BORDER_COLOR)
-                    Box(modifier = modifier) {
+                    Box() {
+                        Box(modifier = modifier) {
+                        }
                         val position = "${'A' + row}${BOARD_SIZE - col}"
                         cell(
                             state = board?.get(position),
@@ -335,6 +338,7 @@ fun boardWrapper(paddingStart: Dp, paddingTop: Dp) {
             .size(((BOARD_SIZE - 1) * CELL_SIZE).dp + GRID_THICKNESS * 2)
             .offset(x = -GRID_THICKNESS * 2, y = -GRID_THICKNESS * 2)
             .border(width = GRID_THICKNESS, color = GRID_BORDER_COLOR)
+
     )
 }
 
@@ -350,18 +354,20 @@ fun cell(
     gamevalid: Boolean = false,
     gameIsFinished: Boolean = false
 ) {
+    val newOffset=(-size / 2)-GRID_THICKNESS
     val modifier = when {
         onGrid &&
         viewLastPlayed &&
         lastPlayed is String &&
         lastPlayed == position
-        -> Modifier.size(size).offset(x = -size / 2, y = -size / 2).border(CELL_THICKNESS, CELL_BORDER_COLOR)
-        onGrid -> Modifier.size(size).offset(x = -size / 2, y = -size / 2)
+        -> Modifier.size(size).offset(x = newOffset, y = newOffset).border(CELL_THICKNESS, CELL_BORDER_COLOR)
+        onGrid -> Modifier.size(size).offset(x = newOffset, y = newOffset)
         else -> Modifier.size(size)
     }
-    if ((state != State.WHITE && state != State.BLACK) && !gameIsFinished && gamevalid) {
+    if(gamevalid  ||(gameIsFinished&& state==State.FREE)) Box(modifier = modifier)
+    else if(state==null || state == State.FREE){
         Box(modifier = modifier.clickable(onClick = onClick))
-    } else {
+    }else {
         val filename = when (state) {
             State.WHITE -> WHITE_CELL_PATH
             State.BLACK -> BLACK_CELL_PATH

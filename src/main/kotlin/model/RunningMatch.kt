@@ -2,7 +2,7 @@ package model
 
 class RunningMatch(
     gs: GameStorage,
-    private val id: String,
+    val id: String,
     val me: Player,
     val game: Game,
 ) : Match(gs) {
