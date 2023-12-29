@@ -41,7 +41,7 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
     val board: Board?
         get() = game?.board
 
-    val lastPlayed: String?
+    var lastPlayed: String?=null
         get() = game?.lastPlay
 
     val captures: Captures?
@@ -171,10 +171,10 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
     }
 
     private fun waitForOtherSide() {
-            if (turnAvailable) return
+            if (turnAvailable==true) return
             waitingJob = scope.launch(Dispatchers.IO) {
                 do {
-                    delay(300)
+                    delay(200)
                     try {
                         match = (match as RunningMatch).refresh()
                     } catch (e: NoChangesException) { /* Ignore */
