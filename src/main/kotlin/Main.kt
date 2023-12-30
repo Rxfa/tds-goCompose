@@ -47,10 +47,10 @@ fun FrameWindowScope.app(driver: MongoDriver, exitFunction: () -> Unit) {
                 }; exitFunction()})
         }
         Menu("Play") {
-            Item("Pass", enabled = vm.isRunning, onClick = {
+            Item("Pass", enabled = vm.isRunning && !vm.isOver && !vm.isWaiting, onClick = {
                 scope.launch { vm.passRound() }
             })
-            Item("Captures", enabled = !vm.isOver && vm.isRunning, onClick = vm::showCaptures)
+            Item("Captures", enabled = !vm.isOver && vm.isRunning , onClick = vm::showCaptures)
             Item("Final Score", enabled = vm.isOver, onClick = vm::showScore)
         }
         Menu("Options"){
@@ -141,14 +141,16 @@ fun startOrJoinDialog(
     vm:AppViewModel
 ) {
     var name by remember { mutableStateOf("") }
+    val lastGameId=vm.gameId
+    val lastPlayer=vm.me
     AlertDialog(
         onDismissRequest = onCancel,
         title = { Text(text = "Name to ${type.txt}", style = MaterialTheme.typography.h5) },
         text = { OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Name of game") }) },
         confirmButton = { TextButton(enabled = true, onClick = {
             scope.launch {
-                vm.deleteGame(vm.gameId, vm.me)
-                onAction(name) } }) { Text(type.txt) } },
+                onAction(name)
+                vm.deleteGame(lastGameId,lastPlayer,true)} }) { Text(type.txt) } },
         dismissButton = { TextButton(onClick = onCancel) { Text("Cancel") } }
     )
 }
