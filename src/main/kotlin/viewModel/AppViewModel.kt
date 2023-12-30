@@ -92,7 +92,6 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
             match = (match as RunningMatch).play(pos)
         } catch (e: Exception) {
             errorMessage = e.message
-
         }
         waitForOtherSide()
     }

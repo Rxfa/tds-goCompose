@@ -47,10 +47,10 @@ fun FrameWindowScope.app(driver: MongoDriver, exitFunction: () -> Unit) {
                 }; exitFunction()})
         }
         Menu("Play") {
-            Item("Pass", enabled = vm.isRunning, onClick = {
+            Item("Pass", enabled = vm.isRunning && !vm.isOver && !vm.isWaiting, onClick = {
                 scope.launch { vm.passRound() }
             })
-            Item("Captures", enabled = !vm.isOver && vm.isRunning, onClick = vm::showCaptures)
+            Item("Captures", enabled = !vm.isOver && vm.isRunning , onClick = vm::showCaptures)
             Item("Final Score", enabled = vm.isOver, onClick = vm::showScore)
         }
         Menu("Options"){
