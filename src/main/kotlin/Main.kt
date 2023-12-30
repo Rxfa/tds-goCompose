@@ -226,27 +226,21 @@ fun StatusBar(game: Game?, user: Player?) {
     val horizontalArrangement = Arrangement.SpaceEvenly
     val verticalAlignment = Alignment.CenterVertically
     val modifier = Modifier.fillMaxWidth().background(Color.LightGray)
-    user?.let {
-        return Row(
-            horizontalArrangement = horizontalArrangement,
-            verticalAlignment = verticalAlignment,
-            modifier = modifier
-        ) {
-            Text("You", style = MaterialTheme.typography.h4)
-            cell(state = it.state)
-        }
-    }
     val (txt, player) = when {
-        game == null -> "Waiting for game..." to null
+        game == null -> "No Game" to null
         game.stateOfGame() -> "Winner:" to game.winner()
         else -> "Turn:" to game.showCurrentPlayer()
     }
     Row(horizontalArrangement = horizontalArrangement, verticalAlignment = verticalAlignment, modifier = modifier) {
-        Text(text = txt, style = MaterialTheme.typography.h4)
-        Row(verticalAlignment = verticalAlignment) {
-            Text(text = "Player: ", style = MaterialTheme.typography.h4)
-            cell(state = player?.state)
+        if(txt!="No Game") {
+            Row(verticalAlignment = verticalAlignment) {
+                Text(text = "Player: ", style = MaterialTheme.typography.h4)
+                cell(state = user?.state)
+            }
         }
+        Text(text = txt, style = MaterialTheme.typography.h4)
+        if(player?.state!=null) cell(state= player.state)
+       // Cell(state= )
     }
 }
 
