@@ -78,7 +78,7 @@ fun FrameWindowScope.app(driver: MongoDriver, exitFunction: () -> Unit) {
         if (vm.viewCaptures) capturesDialog(vm.captures, vm::hideCaptures)
         if (vm.viewLastPlayed) scope.launch { vm.refreshGame() }
         if (vm.isWaiting) waitingIndicator()
-        if (vm.showAlert) showErrorMessage(exitFunction)//.also { scope.launch { vm.refreshGame() } }
+        //if (vm.showAlert) showErrorMessage(exitFunction)//.also { scope.launch { vm.refreshGame() } }
     }
 }
 
