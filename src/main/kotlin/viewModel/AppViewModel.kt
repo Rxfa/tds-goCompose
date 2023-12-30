@@ -15,7 +15,6 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
     private val storage = MongoStorage<String, Game>("games", driver, GameSerializer)
     private var match by mutableStateOf(Match(storage))
 
-    //var game by mutableStateOf(Game())
     var viewScore by mutableStateOf(false)
         private set
 
@@ -68,6 +67,7 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
         viewScore = true
     }
 
+
     fun hideScore() {
         viewScore = false
     }
@@ -84,11 +84,14 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
         errorMessage = null
     }
 
+
+
     suspend fun play(pos: String) {
         try {
             match = (match as RunningMatch).play(pos)
         } catch (e: Exception) {
             errorMessage = e.message
+
         }
         waitForOtherSide()
     }
@@ -106,8 +109,9 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
             cancelWaiting()
             match = match.create(gameName)
             inputName = null
+
         }catch (e:Exception){
-            println(e.message)
+            errorMessage=e.message
         }
     }
 
@@ -124,13 +128,12 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
 
             waitForOtherSide()
         }catch (e:Exception){
-            println(e.message)
+            errorMessage=e.message
         }
     }
 
     suspend fun deleteGame(id:String?,player: Player?){
         if(id!=null && player==Player.BLACK ) storage.delete(id)
-        else println("didnt delete")
     }
     
     suspend fun passRound(){
@@ -158,11 +161,6 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
 
     fun showJoinGameDialog() {
         inputName = InputName.JOIN
-    }
-
-    suspend fun exit() {
-        (match as RunningMatch).delete()
-        cancelWaiting()
     }
 
     private fun cancelWaiting() {

@@ -34,14 +34,11 @@ fun FrameWindowScope.app(driver: MongoDriver, exitFunction: () -> Unit) {
             Item("Start Game", onClick = {
                 scope.launch {
                     vm.showNewGameDialog()
-                    vm.deleteGame(vm.gameId, vm.me)
                 }
             })
             Item("Join Game", onClick = {
                 scope.launch {
                     vm.showJoinGameDialog()
-                    vm.deleteGame(vm.gameId, vm.me)
-
             }
         })
             Item("Exit", onClick = {
@@ -53,11 +50,11 @@ fun FrameWindowScope.app(driver: MongoDriver, exitFunction: () -> Unit) {
             Item("Pass", enabled = vm.isRunning, onClick = {
                 scope.launch { vm.passRound() }
             })
-            Item("Show Captures", enabled = !vm.isOver, onClick = vm::showCaptures)
-            Item("Show Final Score", enabled = vm.isOver, onClick = vm::showScore)
+            Item("Captures", enabled = !vm.isOver && vm.isRunning, onClick = vm::showCaptures)
+            Item("Final Score", enabled = vm.isOver, onClick = vm::showScore)
         }
         Menu("Options"){
-            CheckboxItem("Show Last Played", checked = vm.viewLastPlayed, onCheckedChange ={
+            CheckboxItem("Last Played", checked = vm.viewLastPlayed, onCheckedChange ={
                 scope.launch { vm.toggleLastPlayed() }
             })
         }
@@ -66,13 +63,13 @@ fun FrameWindowScope.app(driver: MongoDriver, exitFunction: () -> Unit) {
         ui(vm) {
             position -> scope.launch { vm.play(position) }
         }
-
         vm.inputName?.let {
             startOrJoinDialog(
                 scope = scope,
                 type = it,
                 onCancel = vm::cancelInput,
-                onAction = if (it == AppViewModel.InputName.NEW) vm::newGame else vm::joinGame
+                onAction = if (it == AppViewModel.InputName.NEW) vm::newGame else vm::joinGame,
+                vm=vm
             )
         }
         if (vm.viewScore) scoreDialog(vm.score, vm::hideScore)
@@ -111,7 +108,7 @@ fun capturesDialog(captures: Captures?, closeDialog: () -> Unit) {
 @Composable
 fun waitingIndicator() = CircularProgressIndicator(modifier = Modifier.fillMaxSize().padding(30.dp), strokeWidth = 15.dp)
 
-@OptIn(ExperimentalMaterialApi::class)
+
 @Composable
 fun scoreDialog(score: Score?, closeDialog: () -> Unit) {
     AlertDialog(
@@ -134,24 +131,27 @@ fun scoreDialog(score: Score?, closeDialog: () -> Unit) {
     )
 }
 
-@OptIn(ExperimentalMaterialApi::class)
+
 @Composable
 fun startOrJoinDialog(
     scope: CoroutineScope,
     type: AppViewModel.InputName,
     onCancel: () -> Unit,
-    onAction: KSuspendFunction1<String, Unit>
+    onAction: KSuspendFunction1<String, Unit>,
+    vm:AppViewModel
 ) {
-    var name by remember { mutableStateOf(" ") }
+    var name by remember { mutableStateOf("") }
     AlertDialog(
         onDismissRequest = onCancel,
         title = { Text(text = "Name to ${type.txt}", style = MaterialTheme.typography.h5) },
         text = { OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Name of game") }) },
-        confirmButton = { TextButton(enabled = true, onClick = { scope.launch { onAction(name) } }) { Text(type.txt) } },
+        confirmButton = { TextButton(enabled = true, onClick = {
+            scope.launch {
+                vm.deleteGame(vm.gameId, vm.me)
+                onAction(name) } }) { Text(type.txt) } },
         dismissButton = { TextButton(onClick = onCancel) { Text("Cancel") } }
     )
 }
-
 
 @Composable
 fun ui(vm: AppViewModel, onClick: (String) -> Unit) {
@@ -243,6 +243,7 @@ fun statusBar(game: Game?, user: Player?) {
     val (txt, player) = when {
         game == null -> "No Game" to null
         game.stateOfGame() -> "Winner:" to game.winner()
+        !game.board.pass.none() && game.isMyTurn(user!!) -> "Passed:" to user.other
         else -> "Turn:" to game.showCurrentPlayer()
     }
     Row(horizontalArrangement = horizontalArrangement, verticalAlignment = verticalAlignment, modifier = modifier) {

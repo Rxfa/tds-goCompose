@@ -20,16 +20,12 @@ class MongoDriver(nameDb: String? = null) : Closeable {
     init {
         val envConnection =
             dotenv["MONGO_DB_CONN"] ?: throw MongoClientException("A MongoDB connection string is required")
-        // val envConnection = System.getenv(ENV_CONNECTION)
-        //   ?: throw MongoClientException("Connection string in environment variable $ENV_CONNECTION is required")
         val dbName = requireNotNull(
             nameDb ?: ConnectionString(envConnection).database
         ) { "Database name is required in constructor or in connection string" }
         client = MongoClient.create(envConnection)
         db = client.getDatabase(dbName)
-        println(client)
-        println(db.name)
-        //Runtime.getRuntime().addShutdownHook(Thread { client.close() })
+        println("Database Running: ${db.name}")
     }
 
     override fun close() {
