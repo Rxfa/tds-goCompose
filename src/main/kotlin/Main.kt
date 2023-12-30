@@ -63,7 +63,6 @@ fun FrameWindowScope.app(driver: MongoDriver, exitFunction: () -> Unit) {
         ui(vm) {
             position -> scope.launch { vm.play(position) }
         }
-
         vm.inputName?.let {
             startOrJoinDialog(
                 scope = scope,
@@ -77,7 +76,6 @@ fun FrameWindowScope.app(driver: MongoDriver, exitFunction: () -> Unit) {
         if (vm.viewCaptures) capturesDialog(vm.captures, vm::hideCaptures)
         if (vm.viewLastPlayed) scope.launch { vm.refreshGame() }
         if (vm.isWaiting) waitingIndicator()
-        //if (vm.showAlert) showErrorMessage(exitFunction)//.also { scope.launch { vm.refreshGame() } }
     }
 }
 
@@ -154,17 +152,6 @@ fun startOrJoinDialog(
         dismissButton = { TextButton(onClick = onCancel) { Text("Cancel") } }
     )
 }
-
-@Composable
-fun showErrorMessage(onCancel: () -> Unit,){
-    println("oi")
-    AlertDialog(
-
-        onDismissRequest = onCancel,
-        confirmButton = { TextButton(onClick = onCancel){Text("Confirm")} },
-    )
-}
-
 
 @Composable
 fun ui(vm: AppViewModel, onClick: (String) -> Unit) {
