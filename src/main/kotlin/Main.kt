@@ -72,7 +72,6 @@ fun FrameWindowScope.app(driver: MongoDriver, exitFunction: () -> Unit) {
                 onAction = if (it == AppViewModel.InputName.NEW) vm::newGame else vm::joinGame,
                 vm=vm
             )
-            //scope.launch {vm.deleteGame(vm.gameId, vm.me) }
         }
         if (vm.viewScore) scoreDialog(vm.score, vm::hideScore)
         if (vm.viewCaptures) capturesDialog(vm.captures, vm::hideCaptures)
@@ -141,20 +140,19 @@ fun startOrJoinDialog(
     type: AppViewModel.InputName,
     onCancel: () -> Unit,
     onAction: KSuspendFunction1<String, Unit>,
-    vm:viewModel.AppViewModel
+    vm:AppViewModel
 ) {
-    var removeLastGame=false
     var name by remember { mutableStateOf("") }
     AlertDialog(
         onDismissRequest = onCancel,
         title = { Text(text = "Name to ${type.txt}", style = MaterialTheme.typography.h5) },
         text = { OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Name of game") }) },
         confirmButton = { TextButton(enabled = true, onClick = {
-            removeLastGame=true
-            scope.launch { onAction(name) } }) { Text(type.txt) } },
+            scope.launch {
+                vm.deleteGame(vm.gameId, vm.me)
+                onAction(name) } }) { Text(type.txt) } },
         dismissButton = { TextButton(onClick = onCancel) { Text("Cancel") } }
     )
-    if(removeLastGame)scope.launch {vm.deleteGame(vm.gameId, vm.me) }
 }
 
 @Composable
