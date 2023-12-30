@@ -36,7 +36,7 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
 
 
     val me: Player?
-        get() = (match as? RunningMatch)?.me
+        get() = (match as? RunningMatch)?.host
 
     val board: Board?
         get() = game?.board
