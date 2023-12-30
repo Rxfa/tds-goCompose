@@ -16,7 +16,7 @@ data class Game(
 
     private val isOver = board.pass.all()
 
-    internal fun IamOwner(player: Player) = player == Player.WHITE
+    internal fun isOwner(player: Player) = player == Player.WHITE
 
     internal fun isMyTurn(player: Player) = board.player == player
 

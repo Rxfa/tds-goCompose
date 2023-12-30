@@ -3,23 +3,23 @@ package model
 class RunningMatch(
     gs: GameStorage,
     val id: String,
-    val me: Player,
+    val host: Player,
     val game: Game,
 ) : Match(gs) {
 
     suspend fun play(move: String): Match {
-        check(game.isMyTurn(me)) { "It's not your turn" }
+        check(game.isMyTurn(host)) { "It's not your turn" }
         val updatedGame = game.move(move)
         gs.update(id, updatedGame)
         // TODO: Try illegal moves and see how it affects lastPlayed.
-        return RunningMatch(gs, id, me, updatedGame)
+        return RunningMatch(gs, id, host, updatedGame)
     }
 
     suspend fun pass(): Match {
-        check(game.isMyTurn(me)) { "It's not your turn" }
+        check(game.isMyTurn(host)) { "It's not your turn" }
         val updatedGame = game.pass()
         gs.update(id, updatedGame)
-        return RunningMatch(gs, id, me, updatedGame)
+        return RunningMatch(gs, id, host, updatedGame)
     }
 
     suspend fun refresh(): RunningMatch {
@@ -27,11 +27,11 @@ class RunningMatch(
 
         if (game == updatedGame)
             throw NoChangesException()
-        return RunningMatch(gs, id, me, updatedGame)
+        return RunningMatch(gs, id, host, updatedGame)
     }
 
     suspend fun delete() {
-        if (game.IamOwner(me))
+        if (game.isOwner(host))
             gs.delete(id)
     }
 
@@ -41,8 +41,8 @@ class RunningMatch(
 
     fun newBoard(): RunningMatch {
         val newGame = game //TODO
-        return RunningMatch(gs, id, me, newGame)
+        return RunningMatch(gs, id, host, newGame)
     }
 
-    fun isMyTurn() = game.isMyTurn(me)
+    fun isMyTurn() = game.isMyTurn(host)
 }

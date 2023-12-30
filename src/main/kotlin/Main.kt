@@ -8,17 +8,12 @@ import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.window.*
-import model.*
-import mongo.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.*
-import androidx.compose.ui.zIndex
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import model.*
@@ -30,7 +25,7 @@ import kotlin.reflect.KSuspendFunction1
 
 @Composable
 @Preview
-fun FrameWindowScope.App(driver: MongoDriver, exitFunction: () -> Unit) {
+fun FrameWindowScope.app(driver: MongoDriver, exitFunction: () -> Unit) {
     val scope = rememberCoroutineScope()
     val vm = remember { AppViewModel(driver, scope) }
 
@@ -68,27 +63,28 @@ fun FrameWindowScope.App(driver: MongoDriver, exitFunction: () -> Unit) {
         }
     }
     MaterialTheme {
-        background(vm) {
+        ui(vm) {
             position -> scope.launch { vm.play(position) }
         }
 
         vm.inputName?.let {
-            StartOrJoinDialog(
+            startOrJoinDialog(
                 scope = scope,
                 type = it,
                 onCancel = vm::cancelInput,
                 onAction = if (it == AppViewModel.InputName.NEW) vm::newGame else vm::joinGame
             )
         }
-        if (vm.viewScore) ScoreDialog(vm.score, vm::hideScore)
-        if (vm.viewCaptures) CapturesDialog(vm.captures, vm::hideCaptures)
+        if (vm.viewScore) scoreDialog(vm.score, vm::hideScore)
+        if (vm.viewCaptures) capturesDialog(vm.captures, vm::hideCaptures)
         if (vm.viewLastPlayed) scope.launch { vm.refreshGame() }
         if (vm.isWaiting) waitingIndicator()
     }
 }
 
+
 @Composable
-fun CapturesDialog(captures: Captures?, closeDialog: () -> Unit) {
+fun capturesDialog(captures: Captures?, closeDialog: () -> Unit) {
     AlertDialog(
         title = { Text(text = "Captures in a", style = MaterialTheme.typography.h4) },
         onDismissRequest = closeDialog,
@@ -115,8 +111,9 @@ fun CapturesDialog(captures: Captures?, closeDialog: () -> Unit) {
 @Composable
 fun waitingIndicator() = CircularProgressIndicator(modifier = Modifier.fillMaxSize().padding(30.dp), strokeWidth = 15.dp)
 
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun ScoreDialog(score: Score?, closeDialog: () -> Unit) {
+fun scoreDialog(score: Score?, closeDialog: () -> Unit) {
     AlertDialog(
         title = { Text(text = "Scores in a", style = MaterialTheme.typography.h4) },
         onDismissRequest = closeDialog,
@@ -137,8 +134,9 @@ fun ScoreDialog(score: Score?, closeDialog: () -> Unit) {
     )
 }
 
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun StartOrJoinDialog(
+fun startOrJoinDialog(
     scope: CoroutineScope,
     type: AppViewModel.InputName,
     onCancel: () -> Unit,
@@ -156,7 +154,7 @@ fun StartOrJoinDialog(
 
 
 @Composable
-fun background(vm: AppViewModel, onClick: (String) -> Unit) {
+fun ui(vm: AppViewModel, onClick: (String) -> Unit) {
     Box(modifier = Modifier.fillMaxSize()) {
         Image(
             painter = painterResource(BOARD_PATH),
@@ -169,8 +167,8 @@ fun background(vm: AppViewModel, onClick: (String) -> Unit) {
             verticalArrangement = Arrangement.SpaceBetween,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(CELL_LABEL))
-            BoardOverview(
+            Spacer(modifier = Modifier.height(CELL_SIZE.dp)) // Just so the board stays centered vertically
+            boardOverview(
               board = vm.board, 
               onClick = onClick, 
               lastPlayed = vm.lastPlayed, 
@@ -178,13 +176,13 @@ fun background(vm: AppViewModel, onClick: (String) -> Unit) {
               gamevalid = vm.game == null,
               gameIsFinished = vm.game?.stateOfGame() == true
             )
-            StatusBar(vm.game, vm.me)
+            statusBar(vm.game, vm.me)
         }
     }
 }
 
 @Composable
-fun BoardOverview(
+fun boardOverview(
   board: Board?,
   onClick: (String) -> Unit, 
   lastPlayed: String?, 
@@ -192,37 +190,53 @@ fun BoardOverview(
   gamevalid: Boolean, 
   gameIsFinished:Boolean
 ){
-    Column {
+    Box(
+        modifier = Modifier
+            .offset(x = CELL_SIZE.dp / 2, y = CELL_SIZE.dp / 2) // to account for the 'invisible' cells we have in the grid
+    ){
         letters()
-        Row {
-            numbers()
-            BoardView(
-              board = board, 
-              onClick = onClick, 
-              lastPlayed = lastPlayed, 
-              viewLastPlayed = viewLastPlayed, 
-              gamevalid = gamevalid, 
-              gameIsFinished = gameIsFinished
-            )
-        }
+        numbers()
+        boardView(
+            board = board,
+            onClick = onClick,
+            lastPlayed = lastPlayed,
+            viewLastPlayed = viewLastPlayed,
+            gamevalid = gamevalid,
+            gameIsFinished = gameIsFinished
+        )
     }
 }
 
 @Composable
 fun letters() {
-    Column(modifier = Modifier.padding(start = CELL_LABEL * 3, end = CELL_LABEL * 3, bottom = CELL_LABEL * 4)) {
-        Row(modifier = Modifier.width(BOARD_SIDE).padding(end = CELL_LABEL * 2)) {
-            Spacer(modifier = Modifier.width(CELL_LABEL * 4))
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                repeat(BOARD_SIZE) { Text("${'A' + it}", style = MaterialTheme.typography.h4) }
-            }
+    Row(
+        horizontalArrangement = Arrangement.SpaceBetween,
+        modifier = Modifier
+            .width(BOARD_SIDE - CELL_SIZE.dp + (CELL_SIZE.dp / 4))
+            .offset(y = (- ((CELL_SIZE.dp / 4) - GRID_THICKNESS)) - CELL_SIZE.dp, x = - CELL_SIZE.dp/8)
+    ) {
+        repeat(BOARD_SIZE) {
+            Text("${'A' + it}", fontSize = BOARD_LABEL_TEXT_SIZE)
         }
     }
 }
 
+@Composable
+fun numbers() {
+    Column(
+        verticalArrangement = Arrangement.SpaceBetween,
+        modifier = Modifier
+            .height(BOARD_SIDE - CELL_SIZE.dp + (CELL_SIZE.dp / 2))
+            .offset(y = (- ((CELL_SIZE.dp / 4) + GRID_THICKNESS)), x = - CELL_SIZE.dp)
+    ) {
+        repeat(BOARD_SIZE) {
+            Text("${9 - it}", fontSize = BOARD_LABEL_TEXT_SIZE)
+        }
+    }
+}
 
 @Composable
-fun StatusBar(game: Game?, user: Player?) {
+fun statusBar(game: Game?, user: Player?) {
     val horizontalArrangement = Arrangement.SpaceEvenly
     val verticalAlignment = Alignment.CenterVertically
     val modifier = Modifier.fillMaxWidth().background(Color.LightGray)
@@ -245,35 +259,22 @@ fun StatusBar(game: Game?, user: Player?) {
 }
 
 @Composable
-fun numbers() {
-    Row {
-        Column {
-            Column(
-                modifier = Modifier.height(BOARD_SIDE).padding(bottom = CELL_LABEL * 3),
-                verticalArrangement = Arrangement.SpaceBetween
-            ) {
-                repeat(BOARD_SIZE) { Text("${9 - it}") }
-            }
-        }
-        Spacer(modifier = Modifier.width(CELL_LABEL * 4))
-    }
-}
-
-
-@Composable
-fun BoardView(board: Board?, onClick: (String) -> Unit, lastPlayed: String?, viewLastPlayed: Boolean, gamevalid: Boolean,gameIsFinished:Boolean) {
-    val paddingStart = CELL_LABEL * 2
-    val paddingTop = paddingStart
+fun boardView(
+    board: Board?,
+    onClick: (String) -> Unit,
+    lastPlayed: String?,
+    viewLastPlayed: Boolean,
+    gamevalid: Boolean,
+    gameIsFinished:Boolean
+) {
     Box {
-        boardWrapper(paddingStart = paddingStart, paddingTop = paddingTop)
+        boardWrapper()
         boardCells(
             board = board,
             onClick = onClick,
-            paddingStart = paddingStart,
-            paddingTop = paddingTop,
             lastPlayed = lastPlayed,
             viewLastPlayed = viewLastPlayed,
-            gamevalid = gamevalid,
+            gameIsValid = gamevalid,
             gameIsFinished = gameIsFinished
         )
     }
@@ -284,14 +285,12 @@ fun BoardView(board: Board?, onClick: (String) -> Unit, lastPlayed: String?, vie
 fun boardCells(
     board: Board?,
     onClick: (String) -> Unit,
-    paddingStart: Dp,
-    paddingTop: Dp,
     lastPlayed: String?,
     viewLastPlayed: Boolean,
-    gamevalid: Boolean,
+    gameIsValid: Boolean,
     gameIsFinished: Boolean
 ) {
-    Column(modifier = Modifier.padding(start = paddingStart, paddingTop)) {
+    Column(modifier = Modifier) {
         repeat(BOARD_SIZE) { row ->
             Row {
                 repeat(BOARD_SIZE) { col ->
@@ -301,12 +300,10 @@ fun boardCells(
                         else
                             Modifier
                                 .size(CELL_SIZE.dp)
-                                .offset(x = -GRID_THICKNESS, y = -GRID_THICKNESS)
                                 .border(GRID_THICKNESS, color = GRID_BORDER_COLOR)
-                    Box() {
-                        Box(modifier = modifier) {
-                        }
+                    Box{
                         val position = "${'A' + row}${BOARD_SIZE - col}"
+                        Box(modifier = modifier)
                         cell(
                             state = board?.get(position),
                             position = position,
@@ -314,7 +311,7 @@ fun boardCells(
                             onGrid = true,
                             lastPlayed = lastPlayed,
                             viewLastPlayed = viewLastPlayed,
-                            gamevalid = gamevalid,
+                            gameIsValid = gameIsValid,
                             gameIsFinished = gameIsFinished
                         )
                     }
@@ -325,14 +322,12 @@ fun boardCells(
 }
 
 @Composable
-fun boardWrapper(paddingStart: Dp, paddingTop: Dp) {
+fun boardWrapper() {
     Box(
         modifier = Modifier
-            .padding(start = paddingStart, top = paddingTop)
-            .size(((BOARD_SIZE - 1) * CELL_SIZE).dp + GRID_THICKNESS * 2)
-            .offset(x = -GRID_THICKNESS * 2, y = -GRID_THICKNESS * 2)
+            .size(REAL_BOARD_SIZE + GRID_THICKNESS * 2)
+            .offset(x = -GRID_THICKNESS, y = -GRID_THICKNESS)
             .border(width = GRID_THICKNESS, color = GRID_BORDER_COLOR)
-
     )
 }
 
@@ -345,29 +340,30 @@ fun cell(
     onGrid: Boolean = false,
     lastPlayed: String? = null,
     viewLastPlayed: Boolean = false,
-    gamevalid: Boolean = false,
+    gameIsValid: Boolean = false,
     gameIsFinished: Boolean = false
 ) {
-    val newOffset=(-size / 2)-GRID_THICKNESS
     val modifier = when {
         onGrid &&
         viewLastPlayed &&
         lastPlayed is String &&
         lastPlayed == position
-        -> Modifier.size(size).offset(x = newOffset, y = newOffset).border(CELL_THICKNESS, CELL_BORDER_COLOR)
-        onGrid -> Modifier.size(size).offset(x = newOffset, y = newOffset)
+        -> Modifier.size(size).offset(x = CELL_OFFSET, y = CELL_OFFSET).border(CELL_THICKNESS, CELL_BORDER_COLOR)
+        onGrid -> Modifier.size(size).offset(x = CELL_OFFSET, y = CELL_OFFSET)
         else -> Modifier.size(size)
     }
-    if(gamevalid  ||(gameIsFinished&& state==State.FREE)) Box(modifier = modifier)
-    else if(state==null || state == State.FREE){
-        Box(modifier = modifier.clickable(onClick = onClick))
-    }else {
-        val filename = when (state) {
-            State.WHITE -> WHITE_CELL_PATH
-            State.BLACK -> BLACK_CELL_PATH
-            else -> ""
+
+    when{
+        gameIsValid  || (gameIsFinished && state == State.FREE) -> Box(modifier = modifier)
+        state == null || state == State.FREE -> Box(modifier = modifier.clickable(onClick = onClick))
+        else -> {
+            val filename = when (state) {
+                State.WHITE -> WHITE_CELL_PATH
+                State.BLACK -> BLACK_CELL_PATH
+                else -> ""
+            }
+            Image(painter = painterResource(filename), contentDescription = "player $state", modifier = modifier)
         }
-        Image(painter = painterResource(filename), contentDescription = "player $state", modifier = modifier)
     }
 }
 
@@ -379,6 +375,6 @@ fun main() = application {
         resizable = false,
     ) {
         val driver = MongoDriver()
-        App(driver, ::exitApplication)
+        app(driver, ::exitApplication)
     }
 }
