@@ -43,6 +43,7 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
     var lastPlayed: String?=null
         get() = game?.lastPlay
 
+    var changed: Boolean?=null
     val captures: Captures?
         get() = game?.captures
 
@@ -109,7 +110,7 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
             cancelWaiting()
             match = match.create(gameName)
             inputName = null
-
+            changed = true
         }catch (e:Exception){
             errorMessage=e.message
         }
@@ -125,15 +126,21 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
 
             match = match.join(gameName)
             inputName = null
-
+            changed = true
             waitForOtherSide()
         }catch (e:Exception){
             errorMessage=e.message
         }
     }
 
-    suspend fun deleteGame(id:String?,player: Player?){
-        if(id!=null && player==Player.BLACK ) storage.delete(id)
+    suspend fun deleteGame(id:String?,player: Player?,createJoin:Boolean=false){
+        try {
+            if(changed==true && createJoin && id != null && player == Player.BLACK) storage.delete(id)
+            if (!createJoin && id != null && player == Player.BLACK) storage.delete(id)
+            changed= false
+        }catch (e:Exception){
+            errorMessage=e.message
+        }
     }
     
     suspend fun passRound(){
