@@ -64,6 +64,7 @@ fun FrameWindowScope.app(driver: MongoDriver, exitFunction: () -> Unit) {
                 vm=vm
             )
         }
+        if (vm.alert) alertDialog(vm.errorMessage,vm::cancelInput,vm::alertGone)
         if (vm.viewScore) scoreDialog(vm.score, vm::hideScore)
         if (vm.viewCaptures) capturesDialog(vm.captures, vm::hideCaptures)
         if (vm.viewLastPlayed) scope.launch { vm.refreshGame() }
@@ -121,6 +122,28 @@ fun scoreDialog(score: Score?, closeDialog: () -> Unit) {
             }
         }
     )
+}
+
+@Composable
+fun alertDialog(message: String?, onDismiss: () -> Unit,alertGone:() -> Unit) {
+    if(message!=null) {
+        AlertDialog(
+            onDismissRequest = {
+                alertGone()
+                onDismiss()
+            },
+            title = { Text(text = "Alert") },
+            text = { Text(text = message) },
+            confirmButton = {
+                Button(onClick = {
+                    alertGone()
+                    onDismiss()
+                }) {
+                    Text("OK")
+                }
+            }
+        )
+    }
 }
 
 
@@ -215,19 +238,21 @@ fun statusBar(game: Game?, user: Player?) {
     val modifier = Modifier.fillMaxWidth().background(Color.LightGray)
     val (txt, player) = when {
         game == null -> "No Game" to null
-        game.stateOfGame() -> "Winner:" to game.winner()
+        game.stateOfGame() -> "Winner: " to game.winner()
         !game.board.pass.none() && game.isMyTurn(user!!) -> "Passed:" to user.other
-        else -> "Turn:" to game.showCurrentPlayer()
+        else -> "Turn: " to game.showCurrentPlayer()
     }
     Row(horizontalArrangement = horizontalArrangement, verticalAlignment = verticalAlignment, modifier = modifier) {
-        if(txt!="No Game") {
+        if(player!=null) {
             Row(verticalAlignment = verticalAlignment) {
                 Text(text = "Player: ", style = MaterialTheme.typography.h4)
                 cell(state = user?.state)
             }
         }
-        Text(text = txt, style = MaterialTheme.typography.h4)
-        if(player?.state!=null) cell(state= player.state)
+        Row(verticalAlignment = verticalAlignment) {
+            Text(text = txt, style = MaterialTheme.typography.h4)
+            if (player?.state != null) cell(state = player.state)
+        }
     }
 }
 

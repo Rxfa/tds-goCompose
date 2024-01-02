@@ -18,11 +18,14 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
     var viewScore by mutableStateOf(false)
         private set
 
+    var alert by mutableStateOf(false)
+        private set
     var viewCaptures by mutableStateOf(false)
         private set
     var inputName by mutableStateOf<InputName?>(null)
         private set
-    private var errorMessage by mutableStateOf<String?>(null) //ErrorDialog state
+
+    var errorMessage by mutableStateOf<String?>(null) //ErrorDialog state
 
     var viewLastPlayed by mutableStateOf(false)
 
@@ -31,6 +34,7 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
 
     val gameId:String? 
        get() =(match as? RunningMatch)?.id
+
 
 
     val me: Player?
@@ -67,6 +71,9 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
         viewScore = true
     }
 
+    fun alertGone(){
+        alert =false
+    }
 
     fun hideScore() {
         viewScore = false
@@ -113,6 +120,7 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
             changed = true
         }catch (e:Exception){
             errorMessage=e.message
+            alert = true
         }
     }
 
@@ -130,6 +138,7 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
             waitForOtherSide()
         }catch (e:Exception){
             errorMessage=e.message
+            alert = true
         }
     }
 
