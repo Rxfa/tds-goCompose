@@ -11,7 +11,6 @@ class RunningMatch(
         check(game.isMyTurn(host)) { "It's not your turn" }
         val updatedGame = game.move(move)
         gs.update(id, updatedGame)
-        // TODO: Try illegal moves and see how it affects lastPlayed.
         return RunningMatch(gs, id, host, updatedGame)
     }
 

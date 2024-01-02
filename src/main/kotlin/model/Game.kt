@@ -14,9 +14,9 @@ data class Game(
     val lastPlay: String? = null
 ) {
 
-    private val isOver = board.pass.all()
+    internal val isOver = board.pass.all()
 
-    internal fun isOwner(player: Player) = player == Player.WHITE
+    internal fun isOwner(player: Player) = player == Player.BLACK
 
     internal fun isMyTurn(player: Player) = board.player == player
 
