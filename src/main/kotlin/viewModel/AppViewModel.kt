@@ -18,12 +18,14 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
     var viewScore by mutableStateOf(false)
         private set
 
+    var alert by mutableStateOf(false)
+        private set
     var viewCaptures by mutableStateOf(false)
         private set
     var inputName by mutableStateOf<InputName?>(null)
         private set
+
     var errorMessage by mutableStateOf<String?>(null) //ErrorDialog state
-        private set
 
     var viewLastPlayed by mutableStateOf(false)
 
@@ -34,16 +36,17 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
        get() =(match as? RunningMatch)?.id
 
 
+
     val me: Player?
         get() = (match as? RunningMatch)?.host
 
     val board: Board?
         get() = game?.board
 
-    var lastPlayed: String?=null
+    val lastPlayed: String?
         get() = game?.lastPlay
 
-    var changed: Boolean?=null
+    private var changed: Boolean?=null
     val captures: Captures?
         get() = game?.captures
 
@@ -68,6 +71,9 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
         viewScore = true
     }
 
+    fun alertGone(){
+        alert =false
+    }
 
     fun hideScore() {
         viewScore = false
@@ -81,9 +87,11 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
         viewCaptures = false
     }
 
+    /*
     fun hideError() {
         errorMessage = null
     }
+    */
 
 
 
@@ -112,6 +120,7 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
             changed = true
         }catch (e:Exception){
             errorMessage=e.message
+            alert = true
         }
     }
 
@@ -129,13 +138,16 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
             waitForOtherSide()
         }catch (e:Exception){
             errorMessage=e.message
+            alert = true
         }
     }
 
     suspend fun deleteGame(id:String?,player: Player?,createJoin:Boolean=false){
         try {
-            if(changed==true && createJoin && id != null && player == Player.BLACK) storage.delete(id)
-            if (!createJoin && id != null && player == Player.BLACK) storage.delete(id)
+            if(changed==true && createJoin && id != null && player == Player.BLACK)
+                storage.delete(id)
+            if (!createJoin && id != null && player == Player.BLACK)
+                storage.delete(id)
             changed= false
         }catch (e:Exception){
             errorMessage=e.message
@@ -145,8 +157,7 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
     suspend fun passRound(){
         try{
             match=(match as RunningMatch).pass()
-            lastPlayed=null
-
+            //lastPlayed=null
         } catch (e: Exception) {
             errorMessage = e.message
         }
@@ -175,16 +186,17 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
     }
 
     private fun waitForOtherSide() {
-            if (turnAvailable==true) return
+            if (turnAvailable==true)
+                return
             waitingJob = scope.launch(Dispatchers.IO) {
                 do {
                     delay(200)
                     try {
                         match = (match as RunningMatch).refresh()
-                    } catch (e: NoChangesException) { /* Ignore */
                     } catch (e: Exception) {
                         errorMessage = e.message
-                        if (e is GameDeletedException) match = Match(storage)
+                        if (e is GameDeletedException)
+                            match = Match(storage)
                     }
                 } while (turnAvailable==false && game?.stateOfGame()==false)
                 waitingJob = null

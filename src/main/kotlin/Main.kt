@@ -32,19 +32,11 @@ fun FrameWindowScope.app(driver: MongoDriver, exitFunction: () -> Unit) {
     MenuBar {
         Menu("Game") {
             Item("Start Game", onClick = {
-                scope.launch {
-                    vm.showNewGameDialog()
-                }
-            })
-            Item("Join Game", onClick = {
-                scope.launch {
-                    vm.showJoinGameDialog()
-            }
-        })
+                scope.launch { vm.showNewGameDialog() } })
+            Item(
+                "Join Game", onClick = { scope.launch { vm.showJoinGameDialog() } })
             Item("Exit", onClick = {
-                scope.launch{
-                    vm.deleteGame(vm.gameId,vm.me)
-                }; exitFunction()})
+                scope.launch{ vm.deleteGame(vm.gameId, vm.me) }; exitFunction()})
         }
         Menu("Play") {
             Item("Pass", enabled = vm.isRunning && !vm.isOver && !vm.isWaiting, onClick = {
@@ -72,6 +64,7 @@ fun FrameWindowScope.app(driver: MongoDriver, exitFunction: () -> Unit) {
                 vm=vm
             )
         }
+        if (vm.alert) alertDialog(vm.errorMessage,vm::cancelInput,vm::alertGone)
         if (vm.viewScore) scoreDialog(vm.score, vm::hideScore)
         if (vm.viewCaptures) capturesDialog(vm.captures, vm::hideCaptures)
         if (vm.viewLastPlayed) scope.launch { vm.refreshGame() }
@@ -131,6 +124,28 @@ fun scoreDialog(score: Score?, closeDialog: () -> Unit) {
     )
 }
 
+@Composable
+fun alertDialog(message: String?, onDismiss: () -> Unit,alertGone:() -> Unit) {
+    if(message!=null) {
+        AlertDialog(
+            onDismissRequest = {
+                alertGone()
+                onDismiss()
+            },
+            title = { Text(text = "Alert") },
+            text = { Text(text = message) },
+            confirmButton = {
+                Button(onClick = {
+                    alertGone()
+                    onDismiss()
+                }) {
+                    Text("OK")
+                }
+            }
+        )
+    }
+}
+
 
 @Composable
 fun startOrJoinDialog(
@@ -145,13 +160,13 @@ fun startOrJoinDialog(
     val lastPlayer=vm.me
     AlertDialog(
         onDismissRequest = onCancel,
-        title = { Text(text = "Name to ${type.txt}", style = MaterialTheme.typography.h5) },
+        title = { Text(text = "${type.txt} Game", style = MaterialTheme.typography.h5) },
         text = { OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Name of game") }) },
         confirmButton = { TextButton(enabled = true, onClick = {
             scope.launch {
                 onAction(name)
                 vm.deleteGame(lastGameId,lastPlayer,true)} }) { Text(type.txt) } },
-        dismissButton = { TextButton(onClick = onCancel) { Text("Cancel") } }
+        dismissButton = { TextButton(onClick = onCancel) { Text("Cancel") } },
     )
 }
 
@@ -170,42 +185,21 @@ fun ui(vm: AppViewModel, onClick: (String) -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(modifier = Modifier.height(CELL_SIZE.dp)) // Just so the board stays centered vertically
-            boardOverview(
-              board = vm.board, 
-              onClick = onClick, 
-              lastPlayed = vm.lastPlayed, 
-              viewLastPlayed = vm.viewLastPlayed,
-              gamevalid = vm.game == null,
-              gameIsFinished = vm.game?.stateOfGame() == true
-            )
+            boardOverview(vm = vm, onClick = onClick)
             statusBar(vm.game, vm.me)
         }
     }
 }
 
 @Composable
-fun boardOverview(
-  board: Board?,
-  onClick: (String) -> Unit, 
-  lastPlayed: String?, 
-  viewLastPlayed: Boolean, 
-  gamevalid: Boolean, 
-  gameIsFinished:Boolean
-){
+fun boardOverview(vm: AppViewModel, onClick: (String) -> Unit){
     Box(
         modifier = Modifier
             .offset(x = CELL_SIZE.dp / 2, y = CELL_SIZE.dp / 2) // to account for the 'invisible' cells we have in the grid
     ){
         letters()
         numbers()
-        boardView(
-            board = board,
-            onClick = onClick,
-            lastPlayed = lastPlayed,
-            viewLastPlayed = viewLastPlayed,
-            gamevalid = gamevalid,
-            gameIsFinished = gameIsFinished
-        )
+        boardView(vm = vm, onClick = onClick)
     }
 }
 
@@ -244,55 +238,38 @@ fun statusBar(game: Game?, user: Player?) {
     val modifier = Modifier.fillMaxWidth().background(Color.LightGray)
     val (txt, player) = when {
         game == null -> "No Game" to null
-        game.stateOfGame() -> "Winner:" to game.winner()
+        game.stateOfGame() -> "Winner: " to game.winner()
         !game.board.pass.none() && game.isMyTurn(user!!) -> "Passed:" to user.other
-        else -> "Turn:" to game.showCurrentPlayer()
+        else -> "Turn: " to game.showCurrentPlayer()
     }
     Row(horizontalArrangement = horizontalArrangement, verticalAlignment = verticalAlignment, modifier = modifier) {
-        if(txt!="No Game") {
+        if(player!=null) {
             Row(verticalAlignment = verticalAlignment) {
                 Text(text = "Player: ", style = MaterialTheme.typography.h4)
                 cell(state = user?.state)
             }
         }
-        Text(text = txt, style = MaterialTheme.typography.h4)
-        if(player?.state!=null) cell(state= player.state)
-       // Cell(state= )
+        Row(verticalAlignment = verticalAlignment) {
+            Text(text = txt, style = MaterialTheme.typography.h4)
+            if (player?.state != null) cell(state = player.state)
+        }
     }
 }
 
 @Composable
-fun boardView(
-    board: Board?,
-    onClick: (String) -> Unit,
-    lastPlayed: String?,
-    viewLastPlayed: Boolean,
-    gamevalid: Boolean,
-    gameIsFinished:Boolean
-) {
+fun boardView(vm: AppViewModel, onClick: (String) -> Unit) {
     Box {
         boardWrapper()
         boardCells(
-            board = board,
+            vm = vm,
             onClick = onClick,
-            lastPlayed = lastPlayed,
-            viewLastPlayed = viewLastPlayed,
-            gameIsValid = gamevalid,
-            gameIsFinished = gameIsFinished
         )
     }
 }
 
 
 @Composable
-fun boardCells(
-    board: Board?,
-    onClick: (String) -> Unit,
-    lastPlayed: String?,
-    viewLastPlayed: Boolean,
-    gameIsValid: Boolean,
-    gameIsFinished: Boolean
-) {
+fun boardCells(onClick: (String) -> Unit, vm: AppViewModel) {
     Column(modifier = Modifier) {
         repeat(BOARD_SIZE) { row ->
             Row {
@@ -308,14 +285,14 @@ fun boardCells(
                         val position = "${'A' + row}${BOARD_SIZE - col}"
                         Box(modifier = modifier)
                         cell(
-                            state = board?.get(position),
+                            state = vm.board?.get(position),
                             position = position,
                             onClick = { onClick(position) },
                             onGrid = true,
-                            lastPlayed = lastPlayed,
-                            viewLastPlayed = viewLastPlayed,
-                            gameIsValid = gameIsValid,
-                            gameIsFinished = gameIsFinished
+                            lastPlayed = vm.lastPlayed,
+                            viewLastPlayed = vm.viewLastPlayed,
+                            gameIsValid = vm.game == null,
+                            gameIsFinished = vm.game?.stateOfGame() == true
                         )
                     }
                 }

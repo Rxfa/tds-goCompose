@@ -13,13 +13,13 @@ import java.io.Closeable
 val dotenv = dotenvVault()
 
 
-class MongoDriver(nameDb: String? = null) : Closeable {
+class MongoDriver(nameDb: String? = null, isTest: Boolean = false) : Closeable {
     val db: MongoDatabase
     private val client: MongoClient
 
     init {
-        val envConnection =
-            dotenv["MONGO_DB_CONN"] ?: throw MongoClientException("A MongoDB connection string is required")
+        val dbConn = if(isTest) dotenv["MOCK_DB_CONN"] else dotenv["MONGO_DB_CONN"]
+        val envConnection = dbConn ?: throw MongoClientException("A MongoDB connection string is required")
         val dbName = requireNotNull(
             nameDb ?: ConnectionString(envConnection).database
         ) { "Database name is required in constructor or in connection string" }
