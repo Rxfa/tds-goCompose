@@ -10,11 +10,11 @@ const val WHITE_CELL_PATH = "white.png"
 const val BLACK_CELL_PATH = "black.png"
 const val BOARD_PATH = "board.png"
 
-val SCREEN_SIZE: Rectangle = GraphicsEnvironment.getLocalGraphicsEnvironment().maximumWindowBounds
-val WIN_WIDTH = (SCREEN_SIZE.width / 3)
+
+val WIN_WIDTH = 500
 val CELL_SIZE = WIN_WIDTH / (BOARD_SIZE + 2)
 val SMALL_CELL_SIZE = 30.dp
-val WIN_HEIGHT = WIN_WIDTH + (CELL_SIZE * 2)
+val WIN_HEIGHT = WIN_WIDTH + 70
 val CELL_THICKNESS = 1.dp
 val CELL_OFFSET = -(CELL_SIZE/2).dp
 val GRID_THICKNESS = 3.dp

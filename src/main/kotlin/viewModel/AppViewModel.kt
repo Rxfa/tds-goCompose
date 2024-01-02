@@ -131,7 +131,7 @@ class AppViewModel(driver: MongoDriver, val scope: CoroutineScope) {
     suspend fun joinGame(gameName: String) {
         try {
             cancelWaiting()
-
+            require(gameName!=(match as? RunningMatch)?.id) {"Already in that game"}
             match = match.join(gameName)
             inputName = null
             changed = true

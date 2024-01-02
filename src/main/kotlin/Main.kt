@@ -226,7 +226,7 @@ fun numbers() {
             .offset(y = (- ((CELL_SIZE.dp / 4) + GRID_THICKNESS)), x = - CELL_SIZE.dp)
     ) {
         repeat(BOARD_SIZE) {
-            Text("${9 - it}", fontSize = BOARD_LABEL_TEXT_SIZE)
+            Text("${BOARD_SIZE - it}", fontSize = BOARD_LABEL_TEXT_SIZE)
         }
     }
 }
